@@ -1,0 +1,878 @@
+// MOGP Layout System — v0.1.0 (Early Release)
+@use "sass:map";
+@use "sass:string";
+@use "sass:math";
+@use "sass:meta";
+@use "sass:list";
+
+// ---------------------------------------------
+// VERSION
+
+// Reflected into the compiled output banner (see OUTPUT BANNER below).
+// Bump this on release; not intended to be overridden via `with (...)`.
+$mogp-version: "0.1.0" !default;
+
+// ---------------------------------------------
+// SETTINGS
+
+$namespace: "mogp" !default;
+
+$mogp-use-layer: false !default;
+$layer-namespace: "mogp" !default;
+$layer-suffix: "core" !default;
+
+$mogp-output-banner: true !default;
+
+// Selector mode
+// true  -> low specificity selectors with :where()
+// false -> standard selectors without :where()
+//
+// :where() usage
+// Enabled when `$mogp-use-where: true`.
+// Applies to: grid child reset (grid > *), span, col-start, col-end,
+// and offset selectors — including all responsive variants.
+// Does NOT apply to: container, container-full, grid, gap-auto,
+// gap (gap-N, gi-N, gb-N) selectors, or :root. These are always
+// written as standard selectors regardless of this setting.
+$mogp-use-where: true !default;
+
+// Optional output controls
+// Core classes are always generated:
+// container, container-full, grid, span, span auto, span responsive, pi-auto, gap-auto
+
+$mogp-output-padding-inline-utilities: true !default;
+$mogp-output-padding-inline-responsive: true !default;
+
+$mogp-output-gap-utilities: true !default;
+$mogp-output-gap-responsive: true !default;
+
+$mogp-output-gap-axis-utilities: true !default;
+$mogp-output-gap-axis-responsive: true !default;
+
+$mogp-output-col-start-utilities: true !default;
+$mogp-output-col-start-responsive: true !default;
+
+$mogp-output-col-end-utilities: true !default;
+$mogp-output-col-end-responsive: true !default;
+
+// Offset is a user-friendly alias for col-start (offset-N => grid-column-start: N + 1)
+$mogp-output-offset-utilities: true !default;
+$mogp-output-offset-responsive: true !default;
+
+// ---------------------------------------------
+// TOKENS
+
+$breakpoints: (
+  sm: 640px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1280px
+) !default;
+
+$bp-steps: map.keys($breakpoints);
+
+$grid-columns: 12 !default;
+
+// Container max width
+$container-max: 1280px !default;
+
+// Container padding-inline auto values
+$container-padding-inline-auto: (
+  base: 16px,
+  sm: 24px,
+  md: 24px,
+  lg: 32px,
+  xl: 40px
+) !default;
+
+// Container padding-inline scale
+$container-padding-inline-scale: (
+  0: 0,
+  16: 16px,
+  24: 24px,
+  32: 32px,
+  40: 40px
+) !default;
+
+$container-padding-inline-steps: map.keys($container-padding-inline-scale);
+
+// Auto gap values
+$gap-auto-values: (
+  base: 16px,
+  sm: 16px,
+  md: 24px,
+  lg: 24px,
+  xl: 24px
+) !default;
+
+// Gap scale
+$gaps: (
+  0: 0,
+  8: 8px,
+  16: 16px,
+  24: 24px,
+  32: 32px,
+  40: 40px,
+  48: 48px
+) !default;
+
+$gap-steps: map.keys($gaps);
+
+// ---------------------------------------------
+// VALIDATION
+
+@if meta.type-of($grid-columns) != number {
+  @error "[MOGP] Invalid `$grid-columns`: `#{$grid-columns}`. Use a positive unitless integer.";
+}
+
+@if not math.is-unitless($grid-columns) {
+  @error "[MOGP] Invalid `$grid-columns`: `#{$grid-columns}`. Use a unitless number.";
+}
+
+@if $grid-columns != math.round($grid-columns) {
+  @error "[MOGP] Invalid `$grid-columns`: `#{$grid-columns}`. Use an integer.";
+}
+
+@if $grid-columns <= 0 {
+  @error "[MOGP] Invalid `$grid-columns`: `#{$grid-columns}`. Use a number greater than 0.";
+}
+
+@if $mogp-use-where != true and $mogp-use-where != false {
+  @error "[MOGP] Invalid `$mogp-use-where`: `#{$mogp-use-where}`. Use true or false.";
+}
+
+// $namespace, $layer-namespace, and $layer-suffix all get joined
+// (via mogp-join) and embedded directly into generated CSS: class
+// selectors (.#{$prefix}container), custom property names
+// (--#{$namespace}-container-max), and the @layer name
+// (@layer #{$layer-name}). All three need to be safe in every one of
+// those contexts: letters, digits, and hyphens only, not starting with
+// a digit. No spaces, no leading dot/hash, nothing that would produce
+// broken or invalid CSS.
+@mixin mogp-validate-css-ident($value, $value-name) {
+  @if meta.type-of($value) != string {
+    @error "[MOGP] Invalid `#{$value-name}`: `#{$value}`. Use a string, e.g. \"layout\".";
+  }
+
+  @if $value != "" {
+    $mogp-ident-chars: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
+
+    @for $i from 1 through string.length($value) {
+      $mogp-ident-char: string.slice($value, $i, $i);
+
+      @if not string.index($mogp-ident-chars, $mogp-ident-char) {
+        @error "[MOGP] Invalid `#{$value-name}`: `#{$value}`. Only letters, digits, and hyphens are allowed — found `#{$mogp-ident-char}`. Spaces and symbols like `.` or `#` are not permitted.";
+      }
+    }
+
+    $mogp-ident-first-char: string.slice($value, 1, 1);
+
+    @if string.index("0123456789", $mogp-ident-first-char) {
+      @error "[MOGP] Invalid `#{$value-name}`: `#{$value}`. It can't start with a digit — that would produce an invalid CSS identifier.";
+    }
+  }
+}
+
+@include mogp-validate-css-ident($namespace, "$namespace");
+@include mogp-validate-css-ident($layer-namespace, "$layer-namespace");
+@include mogp-validate-css-ident($layer-suffix, "$layer-suffix");
+
+// Validates that every value in a token scale map is a usable CSS length:
+// a number with a unit, or literal 0 (always valid in CSS without a
+// unit). Catches things like `$gaps: (8: test)` or unitless garbage
+// before they ever reach the output. $allow-zero exists because scale
+// maps like $gaps/$container-padding-inline-scale legitimately start at 0.
+@mixin mogp-validate-numeric-map($map, $map-name, $allow-zero: true) {
+  @each $key, $value in $map {
+    @if meta.type-of($value) != number {
+      @error "[MOGP] Invalid value for `#{$key}` in `#{$map-name}`: `#{$value}`. Use a number with a length unit, e.g. 16px.";
+    }
+
+    @if $value == 0 {
+      @if not $allow-zero {
+        @error "[MOGP] Invalid value for `#{$key}` in `#{$map-name}`: `0`. Use a value greater than 0.";
+      }
+    } @else if math.is-unitless($value) {
+      @error "[MOGP] Invalid value for `#{$key}` in `#{$map-name}`: `#{$value}`. Use a number with a length unit (e.g. 16px), or 0.";
+    } @else if $value < 0 {
+      @error "[MOGP] Invalid value for `#{$key}` in `#{$map-name}`: `#{$value}`. Use a non-negative value.";
+    }
+  }
+}
+
+@include mogp-validate-numeric-map($gaps, "$gaps");
+@include mogp-validate-numeric-map($container-padding-inline-scale, "$container-padding-inline-scale");
+@include mogp-validate-numeric-map($container-padding-inline-auto, "$container-padding-inline-auto");
+@include mogp-validate-numeric-map($gap-auto-values, "$gap-auto-values");
+
+// $breakpoints: keys must be safe CSS identifiers — they get interpolated
+// directly into class names (span-{bp}-N), custom property names
+// (--{namespace}-container-pi-{bp}), and @media-adjacent selectors, so the
+// same rules as $namespace apply. Values must be a positive number with a
+// unit (e.g. 768px), and entries must be listed in strictly ascending
+// order — the responsive mixins rely on source order to build the
+// mobile-first cascade (@include mogp-up loops over $bp-steps in map order).
+@each $bp, $value in $breakpoints {
+  @if $bp == "" {
+    @error "[MOGP] Invalid breakpoint key in `$breakpoints`: empty string is not allowed. Use a CSS-identifier-safe name, e.g. \"sm\".";
+  }
+
+  @include mogp-validate-css-ident($bp, "breakpoint key in $breakpoints");
+
+  @if meta.type-of($value) != number {
+    @error "[MOGP] Invalid value for breakpoint `#{$bp}` in `$breakpoints`: `#{$value}`. Use a number with a length unit, e.g. 768px.";
+  }
+
+  @if math.is-unitless($value) {
+    @error "[MOGP] Invalid value for breakpoint `#{$bp}` in `$breakpoints`: `#{$value}`. Breakpoint values need a unit (e.g. 768px), unitless numbers are not allowed.";
+  }
+
+  @if $value <= 0 {
+    @error "[MOGP] Invalid value for breakpoint `#{$bp}` in `$breakpoints`: `#{$value}`. Use a value greater than 0.";
+  }
+}
+
+@if list.length($bp-steps) > 1 {
+  @for $i from 2 through list.length($bp-steps) {
+    $mogp-prev-bp: list.nth($bp-steps, $i - 1);
+    $mogp-curr-bp: list.nth($bp-steps, $i);
+
+    @if map.get($breakpoints, $mogp-curr-bp) <= map.get($breakpoints, $mogp-prev-bp) {
+      @error "[MOGP] `$breakpoints` must be defined in strictly ascending order. `#{$mogp-curr-bp}` (#{map.get($breakpoints, $mogp-curr-bp)}) does not come after `#{$mogp-prev-bp}` (#{map.get($breakpoints, $mogp-prev-bp)}).";
+    }
+  }
+}
+
+// $container-max: must be a positive number with a unit, just like the
+// $breakpoints entries. Catches things like `$container-max: wide`,
+// `$container-max: 1280` (unitless), or `$container-max: -100px` before
+// they reach the generated --#{$namespace}-container-max custom property.
+@if meta.type-of($container-max) != number {
+  @error "[MOGP] Invalid `$container-max`: `#{$container-max}`. Use a number with a length unit, e.g. 1280px.";
+}
+
+@if math.is-unitless($container-max) {
+  @error "[MOGP] Invalid `$container-max`: `#{$container-max}`. Use a number with a length unit (e.g. 1280px), unitless numbers are not allowed.";
+}
+
+@if $container-max <= 0 {
+  @error "[MOGP] Invalid `$container-max`: `#{$container-max}`. Use a value greater than 0.";
+}
+
+// Any map that's keyed by breakpoint name ($container-padding-inline-auto, $gap-auto-values)
+// must use exactly the same breakpoint keys as $breakpoints — no more, no
+// less — so renaming or adding/removing a breakpoint can't silently fall
+// out of sync between the maps. $extra-allowed-keys covers keys these maps
+// are expected to carry beyond the breakpoints themselves (e.g. `base`).
+@mixin mogp-validate-bp-aligned-map($map, $map-name, $extra-allowed-keys: ()) {
+  @each $bp in $bp-steps {
+    @if not map.has-key($map, $bp) {
+      @error "[MOGP] `#{$map-name}` is missing breakpoint key `#{$bp}`, which exists in `$breakpoints`. Add a `#{$bp}` entry to `#{$map-name}`.";
+    }
+  }
+
+  @each $key in map.keys($map) {
+    @if list.index($bp-steps, $key) == null and list.index($extra-allowed-keys, $key) == null {
+      @error "[MOGP] `#{$map-name}` has key `#{$key}`, which does not exist in `$breakpoints`. Rename or remove it from `#{$map-name}`, or add a matching `#{$key}` entry to `$breakpoints`.";
+    }
+  }
+}
+
+@include mogp-validate-bp-aligned-map(
+  $container-padding-inline-auto,
+  "$container-padding-inline-auto",
+  $extra-allowed-keys: (base,)
+);
+
+@include mogp-validate-bp-aligned-map(
+  $gap-auto-values,
+  "$gap-auto-values",
+  $extra-allowed-keys: (base,)
+);
+
+// ---------------------------------------------
+// HELPERS
+
+@function mogp-to-string($value) {
+  @if $value == null {
+    @return "";
+  }
+
+  @return "#{$value}";
+}
+
+@function mogp-ends-with-dash($value) {
+  $value: mogp-to-string($value);
+
+  @return string.length($value) > 0 and
+    string.slice($value, string.length($value), string.length($value)) == "-";
+}
+
+@function mogp-prefix($ns) {
+  $ns: mogp-to-string($ns);
+
+  @if $ns == "" {
+    @return "";
+  }
+
+  @if mogp-ends-with-dash($ns) {
+    @return $ns;
+  }
+
+  @return "#{$ns}-";
+}
+
+@function mogp-join($ns, $suffix) {
+  $ns: mogp-to-string($ns);
+  $suffix: mogp-to-string($suffix);
+
+  @if $ns == "" {
+    @return $suffix;
+  }
+
+  @if $suffix == "" {
+    @return $ns;
+  }
+
+  @if mogp-ends-with-dash($ns) {
+    @return "#{$ns}#{$suffix}";
+  }
+
+  @return "#{$ns}-#{$suffix}";
+}
+
+@function mogp-map-get-required($source, $key, $source-name: "map") {
+  @if not map.has-key($source, $key) {
+    @error "[MOGP] Missing key `#{$key}` in `#{$source-name}`.";
+  }
+
+  @return map.get($source, $key);
+}
+
+@function mogp-gap-token-value($step) {
+  @return mogp-map-get-required($gaps, $step, "$gaps");
+}
+
+@function mogp-container-padding-inline-auto-value($bp) {
+  @return mogp-map-get-required($container-padding-inline-auto, $bp, "$container-padding-inline-auto");
+}
+
+@function mogp-gap-auto-value($bp) {
+  @return mogp-map-get-required($gap-auto-values, $bp, "$gap-auto-values");
+}
+
+@function mogp-selector-mode() {
+  @if $mogp-use-where == true {
+    @return "where";
+  }
+
+  @return "standard";
+}
+
+// ---------------------------------------------
+// MIXINS
+
+@mixin mogp-layer-wrap($name) {
+  @if $mogp-use-layer == true {
+    @layer #{$name} {
+      @content;
+    }
+  } @else if $mogp-use-layer == false {
+    @content;
+  } @else {
+    @error "[MOGP] Invalid `$mogp-use-layer`: `#{$mogp-use-layer}`. Use true or false.";
+  }
+}
+
+@mixin mogp-up($bp) {
+  @if map.has-key($breakpoints, $bp) {
+    @media (min-width: #{map.get($breakpoints, $bp)}) {
+      @content;
+    }
+  } @else {
+    @error "[MOGP] Unknown breakpoint `#{$bp}`.";
+  }
+}
+
+@mixin mogp-container-selector($class-name) {
+  .#{$prefix}container.#{$prefix}#{$class-name},
+  .#{$prefix}container-full.#{$prefix}#{$class-name} {
+    @content;
+  }
+}
+
+@mixin mogp-container-padding-inline-class($class-name, $value) {
+  @include mogp-container-selector($class-name) {
+    --#{$container-padding-inline-var-name}: #{$value};
+  }
+}
+
+@mixin mogp-gap-class($class-name, $value) {
+  .#{$prefix}grid.#{$prefix}#{$class-name} {
+    --#{$gap-var-name}: #{$value};
+  }
+}
+
+@mixin mogp-gap-inline-class($class-name, $value) {
+  .#{$prefix}grid.#{$prefix}#{$class-name} {
+    --#{$gap-inline-var-name}: #{$value};
+  }
+}
+
+@mixin mogp-gap-block-class($class-name, $value) {
+  .#{$prefix}grid.#{$prefix}#{$class-name} {
+    --#{$gap-block-var-name}: #{$value};
+  }
+}
+
+@mixin mogp-grid-child-reset-selector {
+  @if $mogp-use-where == true {
+    :where(.#{$prefix}grid > *) {
+      @content;
+    }
+  } @else {
+    .#{$prefix}grid > * {
+      @content;
+    }
+  }
+}
+
+@mixin mogp-grid-child-selector($class-name) {
+  @if $mogp-use-where == true {
+    :where(.#{$prefix}grid) > .#{$prefix}#{$class-name} {
+      @content;
+    }
+  } @else {
+    .#{$prefix}grid > .#{$prefix}#{$class-name} {
+      @content;
+    }
+  }
+}
+
+// ---------------------------------------------
+// RESOLVE
+
+$namespace-str: mogp-to-string($namespace);
+$prefix: mogp-prefix($namespace-str);
+
+$layer-namespace-str: mogp-to-string($layer-namespace);
+$layer-suffix-str: mogp-to-string($layer-suffix);
+$layer-name: mogp-join($layer-namespace-str, $layer-suffix-str);
+
+$container-max-var-name: mogp-join($namespace-str, "container-max");
+
+// NOTE: the string "container-pi" passed to mogp-join is the literal
+// CSS custom property suffix (--#{$namespace}-container-pi) and is
+// intentionally left unchanged here — only the SCSS variable holding
+// it has been renamed for readability. Renaming the literal would
+// change generated CSS output, which is out of scope for this refactor.
+$container-padding-inline-var-name: mogp-join($namespace-str, "container-pi");
+$container-padding-inline-auto-base-var-name: mogp-join($namespace-str, "container-pi-base");
+
+// Breakpoint-keyed var name map. Built from $bp-steps so it follows
+// whatever breakpoint names are defined in $breakpoints — no hardcoded
+// sm/md/lg/xl here.
+$container-padding-inline-auto-var-names: ();
+@each $bp in $bp-steps {
+  $container-padding-inline-auto-var-names: map.merge(
+    $container-padding-inline-auto-var-names,
+    ($bp: mogp-join($namespace-str, "container-pi-#{$bp}"))
+  );
+}
+
+$gap-var-name: mogp-join($namespace-str, "gap");
+$gap-inline-var-name: mogp-join($namespace-str, "gap-inline");
+$gap-block-var-name: mogp-join($namespace-str, "gap-block");
+
+$gap-auto-base-var-name: mogp-join($namespace-str, "gap-auto-base");
+
+// Same pattern for gap-auto var names.
+$gap-auto-var-names: ();
+@each $bp in $bp-steps {
+  $gap-auto-var-names: map.merge(
+    $gap-auto-var-names,
+    ($bp: mogp-join($namespace-str, "gap-auto-#{$bp}"))
+  );
+}
+
+// ---------------------------------------------
+// OUTPUT BANNER
+
+@if $mogp-output-banner == true {
+  /*! MOGP Layout System v#{$mogp-version} */
+  /*! columns: #{$grid-columns} */
+  /*! breakpoints: #{$bp-steps} */
+  /*! selectors: #{mogp-selector-mode()} */
+  /*! core: container, container-full, grid, span, span auto, span responsive, pi-auto, gap-auto */
+
+  @if $mogp-use-layer == true {
+    /*! layer: #{$layer-name} */
+  }
+
+  @if $mogp-output-padding-inline-utilities == true {
+    /*! pi utilities */
+  }
+
+  @if $mogp-output-padding-inline-responsive == true {
+    /*! pi responsive */
+  }
+
+  @if $mogp-output-gap-utilities == true {
+    /*! gap utilities */
+  }
+
+  @if $mogp-output-gap-responsive == true {
+    /*! gap responsive */
+  }
+
+  @if $mogp-output-gap-axis-utilities == true {
+    /*! gap axis utilities */
+  }
+
+  @if $mogp-output-gap-axis-responsive == true {
+    /*! gap axis responsive */
+  }
+
+  @if $mogp-output-col-start-utilities == true {
+    /*! col-start utilities */
+  }
+
+  @if $mogp-output-col-start-responsive == true {
+    /*! col-start responsive */
+  }
+
+  @if $mogp-output-col-end-utilities == true {
+    /*! col-end utilities */
+  }
+
+  @if $mogp-output-col-end-responsive == true {
+    /*! col-end responsive */
+  }
+
+  @if $mogp-output-offset-utilities == true {
+    /*! offset utilities */
+  }
+
+  @if $mogp-output-offset-responsive == true {
+    /*! offset responsive */
+  }
+} @else if $mogp-output-banner != false {
+  @error "[MOGP] Invalid `$mogp-output-banner`: `#{$mogp-output-banner}`. Use true or false.";
+}
+
+// ---------------------------------------------
+// CONTAINER BASE
+
+@mixin mogp-container-base {
+  inline-size: 100%;
+  margin-inline: auto;
+  box-sizing: border-box;
+
+  --#{$container-padding-inline-var-name}: 0;
+
+  padding-inline: var(--#{$container-padding-inline-var-name});
+}
+
+// ---------------------------------------------
+// OUTPUT
+
+@include mogp-layer-wrap($layer-name) {
+  :root {
+    --#{$container-max-var-name}: #{$container-max};
+
+    --#{$container-padding-inline-auto-base-var-name}: #{mogp-map-get-required(
+        $container-padding-inline-auto,
+        base,
+        "$container-padding-inline-auto"
+      )};
+
+    @each $bp in $bp-steps {
+      --#{map.get($container-padding-inline-auto-var-names, $bp)}: #{mogp-container-padding-inline-auto-value($bp)};
+    }
+
+    --#{$gap-auto-base-var-name}: #{mogp-gap-auto-value(base)};
+
+    @each $bp in $bp-steps {
+      --#{map.get($gap-auto-var-names, $bp)}: #{mogp-gap-auto-value($bp)};
+    }
+  }
+
+  // -------------------------------------------
+  // CONTAINER
+
+  .#{$prefix}container,
+  .#{$prefix}container-full {
+    @include mogp-container-base;
+  }
+
+  .#{$prefix}container {
+    max-inline-size: var(--#{$container-max-var-name});
+  }
+
+  .#{$prefix}container-full {
+    max-inline-size: none;
+  }
+
+  // -------------------------------------------
+  // CONTAINER PADDING-INLINE AUTO
+  // Always generated
+
+  @include mogp-container-selector("pi-auto") {
+    --#{$container-padding-inline-var-name}: var(--#{$container-padding-inline-auto-base-var-name});
+  }
+
+  @each $bp in $bp-steps {
+    @include mogp-up($bp) {
+      @include mogp-container-selector("pi-auto") {
+        --#{$container-padding-inline-var-name}: var(--#{map.get($container-padding-inline-auto-var-names, $bp)});
+      }
+    }
+  }
+
+  // -------------------------------------------
+  // CONTAINER PADDING-INLINE UTILITIES
+  // Optional
+
+  @if $mogp-output-padding-inline-utilities == true {
+    @each $step in $container-padding-inline-steps {
+      @include mogp-container-padding-inline-class(
+        "pi-#{$step}",
+        mogp-map-get-required($container-padding-inline-scale, $step, "$container-padding-inline-scale")
+      );
+    }
+  } @else if $mogp-output-padding-inline-utilities != false {
+    @error "[MOGP] Invalid `$mogp-output-padding-inline-utilities`: `#{$mogp-output-padding-inline-utilities}`. Use true or false.";
+  }
+
+  @if $mogp-output-padding-inline-responsive == true {
+    @each $bp in $bp-steps {
+      @include mogp-up($bp) {
+        @each $step in $container-padding-inline-steps {
+          @include mogp-container-padding-inline-class(
+            "pi-#{$bp}-#{$step}",
+            mogp-map-get-required($container-padding-inline-scale, $step, "$container-padding-inline-scale")
+          );
+        }
+      }
+    }
+  } @else if $mogp-output-padding-inline-responsive != false {
+    @error "[MOGP] Invalid `$mogp-output-padding-inline-responsive`: `#{$mogp-output-padding-inline-responsive}`. Use true or false.";
+  }
+
+  // -------------------------------------------
+  // GRID
+
+  .#{$prefix}grid {
+    display: grid;
+    grid-template-columns: repeat(#{$grid-columns}, minmax(0, 1fr));
+
+    --#{$gap-var-name}: 0;
+    --#{$gap-inline-var-name}: var(--#{$gap-var-name});
+    --#{$gap-block-var-name}: var(--#{$gap-var-name});
+
+    column-gap: var(--#{$gap-inline-var-name});
+    row-gap: var(--#{$gap-block-var-name});
+  }
+
+  @include mogp-grid-child-reset-selector {
+    min-inline-size: 0;
+  }
+
+  // -------------------------------------------
+  // GAP AUTO
+  // Always generated
+
+  .#{$prefix}grid.#{$prefix}gap-auto {
+    --#{$gap-var-name}: var(--#{$gap-auto-base-var-name});
+  }
+
+  @each $bp in $bp-steps {
+    @include mogp-up($bp) {
+      .#{$prefix}grid.#{$prefix}gap-auto {
+        --#{$gap-var-name}: var(--#{map.get($gap-auto-var-names, $bp)});
+      }
+    }
+  }
+
+  // -------------------------------------------
+  // SPAN
+  // Always generated
+
+  @include mogp-grid-child-selector("span-auto") {
+    grid-column: auto;
+  }
+
+  @for $i from 1 through $grid-columns {
+    @include mogp-grid-child-selector("span-#{$i}") {
+      grid-column: span #{$i} / span #{$i};
+    }
+  }
+
+  @each $bp in $bp-steps {
+    @include mogp-up($bp) {
+      @include mogp-grid-child-selector("span-#{$bp}-auto") {
+        grid-column: auto;
+      }
+
+      @for $i from 1 through $grid-columns {
+        @include mogp-grid-child-selector("span-#{$bp}-#{$i}") {
+          grid-column: span #{$i} / span #{$i};
+        }
+      }
+    }
+  }
+
+  // -------------------------------------------
+  // COL START
+  // Optional
+
+  @if $mogp-output-col-start-utilities == true {
+    @for $i from 1 through ($grid-columns + 1) {
+      @include mogp-grid-child-selector("col-start-#{$i}") {
+        grid-column-start: #{$i};
+      }
+    }
+  } @else if $mogp-output-col-start-utilities != false {
+    @error "[MOGP] Invalid `$mogp-output-col-start-utilities`: `#{$mogp-output-col-start-utilities}`. Use true or false.";
+  }
+
+  @if $mogp-output-col-start-responsive == true {
+    @each $bp in $bp-steps {
+      @include mogp-up($bp) {
+        @for $i from 1 through ($grid-columns + 1) {
+          @include mogp-grid-child-selector("col-start-#{$bp}-#{$i}") {
+            grid-column-start: #{$i};
+          }
+        }
+      }
+    }
+  } @else if $mogp-output-col-start-responsive != false {
+    @error "[MOGP] Invalid `$mogp-output-col-start-responsive`: `#{$mogp-output-col-start-responsive}`. Use true or false.";
+  }
+
+  // -------------------------------------------
+  // COL END
+  // Optional
+
+  @if $mogp-output-col-end-utilities == true {
+    @for $i from 1 through ($grid-columns + 1) {
+      @include mogp-grid-child-selector("col-end-#{$i}") {
+        grid-column-end: #{$i};
+      }
+    }
+  } @else if $mogp-output-col-end-utilities != false {
+    @error "[MOGP] Invalid `$mogp-output-col-end-utilities`: `#{$mogp-output-col-end-utilities}`. Use true or false.";
+  }
+
+  @if $mogp-output-col-end-responsive == true {
+    @each $bp in $bp-steps {
+      @include mogp-up($bp) {
+        @for $i from 1 through ($grid-columns + 1) {
+          @include mogp-grid-child-selector("col-end-#{$bp}-#{$i}") {
+            grid-column-end: #{$i};
+          }
+        }
+      }
+    }
+  } @else if $mogp-output-col-end-responsive != false {
+    @error "[MOGP] Invalid `$mogp-output-col-end-responsive`: `#{$mogp-output-col-end-responsive}`. Use true or false.";
+  }
+
+  // -------------------------------------------
+  // OFFSET
+  // Optional
+  // User-friendly alias for col-start: offset-N pushes the element N
+  // columns to the right by setting grid-column-start to N + 1. No new
+  // CSS variables or tokens — this only ever produces grid-column-start.
+  // offset-auto resets grid-column-start back to `auto`, letting the grid's
+  // normal auto-placement algorithm take over again — used to cancel an
+  // offset applied at a smaller breakpoint (e.g. offset-2 offset-lg-auto).
+
+  @if $mogp-output-offset-utilities == true {
+    @include mogp-grid-child-selector("offset-auto") {
+      grid-column-start: auto;
+    }
+
+    @for $i from 1 through ($grid-columns - 1) {
+      @include mogp-grid-child-selector("offset-#{$i}") {
+        grid-column-start: #{$i + 1};
+      }
+    }
+  } @else if $mogp-output-offset-utilities != false {
+    @error "[MOGP] Invalid `$mogp-output-offset-utilities`: `#{$mogp-output-offset-utilities}`. Use true or false.";
+  }
+
+  @if $mogp-output-offset-responsive == true {
+    @each $bp in $bp-steps {
+      @include mogp-up($bp) {
+        @include mogp-grid-child-selector("offset-#{$bp}-auto") {
+          grid-column-start: auto;
+        }
+
+        @for $i from 1 through ($grid-columns - 1) {
+          @include mogp-grid-child-selector("offset-#{$bp}-#{$i}") {
+            grid-column-start: #{$i + 1};
+          }
+        }
+      }
+    }
+  } @else if $mogp-output-offset-responsive != false {
+    @error "[MOGP] Invalid `$mogp-output-offset-responsive`: `#{$mogp-output-offset-responsive}`. Use true or false.";
+  }
+
+  // -------------------------------------------
+  // GAP UTILITIES
+  // Optional
+
+  @if $mogp-output-gap-utilities == true {
+    @each $gap in $gap-steps {
+      @include mogp-gap-class("gap-#{$gap}", mogp-gap-token-value($gap));
+    }
+  } @else if $mogp-output-gap-utilities != false {
+    @error "[MOGP] Invalid `$mogp-output-gap-utilities`: `#{$mogp-output-gap-utilities}`. Use true or false.";
+  }
+
+  @if $mogp-output-gap-axis-utilities == true {
+    @each $gap in $gap-steps {
+      @include mogp-gap-inline-class("gi-#{$gap}", mogp-gap-token-value($gap));
+      @include mogp-gap-block-class("gb-#{$gap}", mogp-gap-token-value($gap));
+    }
+  } @else if $mogp-output-gap-axis-utilities != false {
+    @error "[MOGP] Invalid `$mogp-output-gap-axis-utilities`: `#{$mogp-output-gap-axis-utilities}`. Use true or false.";
+  }
+
+  @if $mogp-output-gap-responsive == true {
+    @each $bp in $bp-steps {
+      @include mogp-up($bp) {
+        @each $gap in $gap-steps {
+          @include mogp-gap-class(
+            "gap-#{$bp}-#{$gap}",
+            mogp-gap-token-value($gap)
+          );
+        }
+      }
+    }
+  } @else if $mogp-output-gap-responsive != false {
+    @error "[MOGP] Invalid `$mogp-output-gap-responsive`: `#{$mogp-output-gap-responsive}`. Use true or false.";
+  }
+
+  @if $mogp-output-gap-axis-responsive == true {
+    @each $bp in $bp-steps {
+      @include mogp-up($bp) {
+        @each $gap in $gap-steps {
+          @include mogp-gap-inline-class(
+            "gi-#{$bp}-#{$gap}",
+            mogp-gap-token-value($gap)
+          );
+
+          @include mogp-gap-block-class(
+            "gb-#{$bp}-#{$gap}",
+            mogp-gap-token-value($gap)
+          );
+        }
+      }
+    }
+  } @else if $mogp-output-gap-axis-responsive != false {
+    @error "[MOGP] Invalid `$mogp-output-gap-axis-responsive`: `#{$mogp-output-gap-axis-responsive}`. Use true or false.";
+  }
+}
