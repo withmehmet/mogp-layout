@@ -220,6 +220,8 @@ In this example:
 
 > **Note:** `offset-auto` resets `grid-column-start` back to `auto`, cancelling any offset previously applied at a smaller breakpoint — the same role `span-auto` plays for `span`. This is the correct way to remove an offset at a larger breakpoint (e.g. `mogp-offset-2 mogp-offset-lg-auto`); setting a numeric offset of `0` would instead force the element to column line `1`, which isn't the same thing and can conflict with the grid's normal auto-placement.
 
+> **Note:** `gap`/`gap-inline` are reserved between **every one** of the grid's `$grid-columns` tracks, not just between visibly adjacent items — a spanning item still has that gap space embedded within its own width. This is standard CSS Grid behavior, not specific to MOGP: any grid built the same way (native `display: grid`, explicit column count, `gap`) works identically, including e.g. Tailwind's `grid-cols-*` + `gap-*`. With a large fixed gap step on a grid with many columns (e.g. `gap-40` on the default 12-column grid), the total reserved gap space can exceed the available width on narrow screens, causing items to overflow. Prefer a smaller gap at small breakpoints and a larger one at wider ones (e.g. `gap-16 gap-md-40`), or use `gap-auto`.
+
 ## Class Naming
 
 All classes follow a single pattern:
