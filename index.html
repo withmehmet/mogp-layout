@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOGP Layout System</title>
+<meta name="description" content="MOGP: container, grid, span, gap and offset. A minimal, compile-time configurable SCSS layout system.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- The library itself. This page's layout is built entirely with it. -->
+<link rel="stylesheet" href="mogp-layout-full.css">
+
+<style>
+  /*
+    Page chrome only: color, type, vertical rhythm, a little flex.
+    Every container / grid / column decision on this page is a MOGP class.
+  */
+
+  :root {
+    --bg:        #FAFAF7;
+    --surface:   #FFFFFF;
+    --line:      #E6E5DF;
+    --muted:     #8C8B85;
+    --text:      #45443F;
+    --ink:       #141413;
+    --accent:    #E8512A;
+    --accent-2:  #FBE3DA;
+    --code-bg:   #161615;
+    --code-text: #D9D8D2;
+    --code-dim:  #6F6E69;
+
+    --font-sans: "Geist", -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "Cascadia Code", monospace;
+    --radius: 10px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:        #111110;
+      --surface:   #1A1A19;
+      --line:      #2A2A28;
+      --muted:     #85847E;
+      --text:      #C4C3BD;
+      --ink:       #F4F3EE;
+      --accent:    #FF6A42;
+      --accent-2:  #3A1F16;
+      --code-bg:   #0B0B0A;
+      --code-text: #D9D8D2;
+      --code-dim:  #5E5D58;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 { color: var(--ink); margin: 0; letter-spacing: -0.025em; line-height: 1.1; }
+  p { margin: 0; }
+  a { color: inherit; }
+  code { font-family: var(--font-mono); font-size: 0.88em; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  .flex-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+  /* ---------- header ---------- */
+  .site-header {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-header .flex-between { block-size: 60px; }
+  .wordmark { font-weight: 700; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+  .nav { display: flex; gap: 24px; font-size: 0.9rem; }
+  .nav a { text-decoration: none; color: var(--text); }
+  .nav a:hover { color: var(--ink); }
+  .nav .nav-gh { color: var(--ink); font-weight: 500; }
+  @media (max-width: 639px) { .nav .nav-hide-sm { display: none; } }
+
+  /* ---------- sections ---------- */
+  .section { padding-block: 88px; border-top: 1px solid var(--line); }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+  }
+  .section h2 { font-size: clamp(1.8rem, 3.6vw, 2.5rem); }
+  .section .lead { margin-top: 14px; font-size: 1.08rem; max-inline-size: 58ch; }
+  .section-body { margin-top: 44px; }
+
+  /* ---------- hero ---------- */
+  .hero { padding-block: 88px 96px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 0.75rem; color: var(--text);
+    border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 8px;
+    background: var(--surface);
+  }
+  .badge i { inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--accent); }
+  .hero h1 { margin-top: 24px; font-size: clamp(2.6rem, 6.4vw, 4.6rem); font-weight: 700; max-inline-size: 13ch; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .lead { margin-top: 22px; font-size: 1.15rem; max-inline-size: 46ch; }
+  .hero-actions { margin-top: 32px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 500 0.93rem/1 var(--font-sans); text-decoration: none; cursor: pointer;
+    padding: 13px 20px; border-radius: 8px; border: 1px solid transparent;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--ink); color: var(--bg); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover { border-color: var(--muted); }
+
+  .hero-stage { margin-top: 64px; }
+  .hero-caption { margin-top: 18px; font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); min-block-size: 1.6em; transition: opacity .25s ease; }
+  .hero-caption b { color: var(--accent); font-weight: 500; }
+
+  /* live grid with a 12-column guide behind it */
+  .guided { position: relative; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  .guide { position: absolute; inset: 14px; pointer-events: none; }
+  .guide > span { background: color-mix(in srgb, var(--accent) 7%, transparent); border-radius: 4px; }
+  /* Reserve height for the tallest state (2 rows of cells) so cycling
+     between 1-row and 2-row layouts never shifts the page below it. */
+  .guided > .mogp-grid:not(.guide) { position: relative; min-block-size: 216px; align-content: start; }
+
+  .cell {
+    min-block-size: 96px; border-radius: 6px; padding: 12px 14px;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: flex-end;
+    font-family: var(--font-mono); font-size: 0.78rem;
+    overflow-wrap: anywhere;
+  }
+  .cell.alt { background: var(--ink); color: var(--bg); }
+  .cell.soft { background: var(--accent-2); color: var(--accent); }
+
+  /* ---------- code ---------- */
+  .code {
+    position: relative; background: var(--code-bg); color: var(--code-text);
+    border-radius: var(--radius); font: 0.84rem/1.75 var(--font-mono);
+    padding: 20px 22px; overflow-x: auto; white-space: pre; min-inline-size: 0;
+  }
+  .code .t { color: var(--code-dim); }
+  .code .c { color: #FFB199; }
+  .code .k { color: #9CC7FF; }
+  .copy {
+    position: absolute; top: 10px; right: 10px;
+    font: 500 0.72rem/1 var(--font-mono); color: var(--code-text);
+    background: #2A2A28; border: 0; border-radius: 6px; padding: 7px 10px; cursor: pointer;
+    opacity: .75;
+  }
+  .copy:hover { opacity: 1; }
+  @media (max-width: 639px) { .code:has(.copy) { padding-top: 48px; } }
+
+  /* ---------- quick start ---------- */
+  .step { min-inline-size: 0; }
+  .step-num {
+    font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 999px;
+    inline-size: 28px; block-size: 28px; display: grid; place-items: center;
+  }
+  .step h3 { font-size: 1.1rem; margin-top: 16px; }
+  .step p { margin-top: 8px; font-size: 0.95rem; }
+  .step .code { margin-top: 18px; }
+
+  /* ---------- mental model ---------- */
+  .model { font-family: var(--font-mono); font-size: 0.8rem; }
+  .layer { border-radius: var(--radius); padding: 18px; position: relative; }
+  .layer-tag { display: inline-block; font-weight: 500; color: var(--ink); margin-bottom: 4px; }
+  .layer-hint { color: var(--muted); display: block; margin-bottom: 14px; }
+  .layer-container { border: 1.5px dashed var(--muted); }
+  .layer-grid { border: 1.5px solid var(--ink); background: var(--surface); }
+  .layer-child { border-radius: 6px; background: var(--accent); color: #fff; padding: 12px; min-block-size: 70px; }
+  .layer-child .layer-tag { color: #fff; }
+  .layer-child .layer-hint { color: rgba(255,255,255,.8); margin: 0; }
+
+  .rules { display: grid; gap: 14px; }
+  .rule { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+  .rule h3 { font-size: 1rem; letter-spacing: -0.01em; }
+  .rule p { margin-top: 6px; font-size: 0.93rem; }
+  .rule .ok, .rule .no { display: block; margin-top: 10px; font-family: var(--font-mono); font-size: 0.78rem; overflow-wrap: anywhere; }
+  .rule .ok::before { content: "✓  "; color: #2E9E5B; }
+  .rule .no { color: var(--muted); }
+  .rule .no::before { content: "✕  "; color: var(--accent); }
+
+  /* ---------- playground ---------- */
+  .pg-presets { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    font: 500 0.85rem/1 var(--font-sans); color: var(--text); cursor: pointer;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px;
+  }
+  .chip:hover { border-color: var(--muted); }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .pg-controls { margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px 12px; }
+  .pg-readout { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); }
+  .pg-readout b { color: var(--ink); font-weight: 500; font-size: 1.05rem; }
+  .pg-readout .bp-pill { color: #fff; background: var(--accent); border-radius: 999px; padding: 2px 10px; margin-left: 8px; font-size: 0.78rem; }
+  .bp-jumps { display: flex; gap: 6px; flex-wrap: wrap; }
+  .bp-jumps button {
+    font: 500 0.75rem/1 var(--font-mono); color: var(--text); cursor: pointer;
+    background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px;
+  }
+  .bp-jumps button.is-active { color: var(--accent); border-color: var(--accent); }
+
+  .slider-wrap { position: relative; margin-top: 16px; padding-bottom: 26px; }
+  input[type="range"] { inline-size: 100%; accent-color: var(--accent); margin: 0; }
+  .ticks { position: absolute; left: 0; right: 0; bottom: 0; block-size: 22px; font: 0.68rem/1 var(--font-mono); color: var(--muted); }
+  .ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; padding-top: 8px; }
+  .ticks span::before { content: ""; position: absolute; top: 0; left: 50%; block-size: 6px; border-left: 1px solid var(--muted); }
+
+  .browser { margin-top: 16px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .browser-bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .browser-bar i { inline-size: 9px; block-size: 9px; border-radius: 50%; background: var(--line); }
+  .browser-bar span { margin-left: 10px; font: 0.72rem/1 var(--font-mono); color: var(--muted); }
+  .stage { padding: 18px; background: repeating-linear-gradient(45deg, transparent 0 8px, color-mix(in srgb, var(--line) 45%, transparent) 8px 9px); }
+  .frame-box { position: relative; margin-inline: auto; overflow: hidden; border-radius: 6px; box-shadow: 0 0 0 1px var(--line), 0 12px 32px -18px rgba(0,0,0,.35); transition: width .08s linear; }
+  .frame-box iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: top left; background: var(--bg); display: block; }
+
+  .pg-code { min-inline-size: 0; }
+  .tok { border-radius: 4px; padding: 1px 3px; margin: 0 -3px; transition: background .15s, color .15s, opacity .15s; }
+  .tok.is-on { background: color-mix(in srgb, #FF6A42 26%, transparent); color: #FFD2C4; }
+  .tok.is-off { opacity: .38; text-decoration: line-through; text-decoration-color: rgba(255,255,255,.35); }
+  .tok.is-wait { opacity: .38; }
+  .legend { margin-top: 14px; display: flex; gap: 18px; flex-wrap: wrap; font: 0.75rem/1.4 var(--font-mono); color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; inline-size: 10px; block-size: 10px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+  .legend .l-on::before { background: var(--accent); }
+  .legend .l-off::before { background: var(--line); }
+  .legend .l-wait::before { border: 1px dashed var(--muted); }
+
+  /* ---------- anatomy ---------- */
+  .anatomy { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 44px 24px 36px; text-align: center; }
+  .anatomy-word { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 2px; font: 500 clamp(1.5rem, 5vw, 2.8rem)/1 var(--font-mono); color: var(--ink); }
+  .part { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; }
+  .part-text { padding-bottom: 10px; border-bottom: 3px solid var(--c); }
+  .part-label { font: 500 0.72rem/1.3 var(--font-sans); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .part-label b { display: block; color: var(--c); font-weight: 600; }
+  .sep { color: var(--muted); }
+  .anatomy-note { margin-top: 30px; font-size: 0.95rem; }
+
+  /* ---------- reference ---------- */
+  .ref { inline-size: 100%; min-inline-size: 560px; border-collapse: collapse; font-size: 0.92rem; }
+  .ref th { text-align: left; font: 500 0.72rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 0 16px 12px 0; border-bottom: 1px solid var(--line); }
+  .ref td { padding: 14px 16px 14px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .ref td:first-child { font-family: var(--font-mono); font-size: 0.82rem; color: var(--ink); white-space: nowrap; }
+  .ref .where { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); white-space: nowrap; }
+  .table-scroll { overflow-x: auto; }
+
+  .bps { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; margin-top: 28px; }
+  .bp { border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: var(--surface); font-family: var(--font-mono); }
+  .bp b { display: block; color: var(--ink); font-size: 0.95rem; font-weight: 500; }
+  .bp span { font-size: 0.72rem; color: var(--muted); }
+
+  /* ---------- customize ---------- */
+  .error {
+    margin-top: 14px; border-radius: var(--radius); padding: 16px 18px;
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+    font: 0.8rem/1.6 var(--font-mono); color: var(--text); overflow-wrap: anywhere;
+  }
+  .error b { color: var(--accent); font-weight: 500; }
+  .feature-list { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 12px; }
+  .feature-list li { padding-left: 22px; position: relative; font-size: 0.95rem; }
+  .feature-list li::before { content: ""; position: absolute; left: 0; top: .55em; inline-size: 8px; block-size: 8px; border-radius: 2px; background: var(--accent); }
+
+  /* ---------- footer ---------- */
+  .site-footer { border-top: 1px solid var(--line); padding-block: 36px 56px; font-size: 0.85rem; color: var(--muted); }
+  .site-footer a { color: var(--text); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <div class="mogp-container mogp-pi-auto flex-between">
+    <a class="wordmark" href="#top">MOGP</a>
+    <nav class="nav" aria-label="Sections">
+      <a class="nav-hide-sm" href="#start">Start</a>
+      <a class="nav-hide-sm" href="#playground">Playground</a>
+      <a class="nav-hide-sm" href="#reference">Reference</a>
+      <a class="nav-gh" href="https://github.com/withmehmet/mogp-layout" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="mogp-container mogp-pi-auto">
+    <span class="badge"><i></i>v0.1.0 · MIT · SCSS</span>
+    <h1>Layout, <em>and nothing else.</em></h1>
+    <p class="lead">
+      Container, grid, span, gap and offset. Five primitives, configured at compile time
+      and generated for every breakpoint. No colors, no typography, no components to fight with.
+    </p>
+    <div class="hero-actions flex-row">
+      <a class="btn btn-primary" href="#start">Get started →</a>
+      <a class="btn btn-ghost" href="#playground">Try the playground</a>
+    </div>
+
+    <div class="hero-stage">
+      <div class="guided">
+        <div class="mogp-grid mogp-gap-auto guide" aria-hidden="true" data-guide></div>
+        <div class="mogp-grid mogp-gap-auto" id="hero-grid">
+          <div class="cell"></div>
+          <div class="cell alt"></div>
+          <div class="cell soft"></div>
+        </div>
+      </div>
+      <p class="hero-caption" id="hero-caption" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUICK START ============ -->
+<section class="section" id="start">
+  <div class="mogp-container mogp-pi-auto">
+    <p class="eyebrow">Quick start</p>
+    <h2>Working layout in three steps.</h2>
+    <p class="lead">No build step required. Grab the compiled CSS, or use the SCSS source when you want to change the defaults.</p>
+
+    <div class="mogp-grid mogp-gap-auto section-body">
+      <div class="step mogp-span-12 mogp-span-lg-4">
+        <span class="step-num">1</span>
+        <h3>Include the CSS</h3>
+        <p>Download <code>mogp-layout-full.css</code> (every utility) or <code>mogp-layout-core.css</code> (the essentials).</p>
+<div class="code"><button class="copy" type="button">Copy</button><span class="t">&lt;</span><span class="k">link</span> rel=<span class="c">"stylesheet"</span>
+      href=<span class="c">"mogp-layout-full.css"</span><span class="t">&gt;</span></div>
+      </div>
+
+      <div class="step mogp-span-12 mogp-span-md-6 mogp-span-lg-4">
+        <span class="step-num">2</span>
+        <h3>Nest three layers</h3>
+        <p>Container → grid → children. Every class belongs to exactly one of these layers.</p>
+<div class="code"><button class="copy" type="button">Copy</button><span class="t">&lt;</span><span class="k">div</span> class=<span class="c">"mogp-container mogp-pi-auto"</span><span class="t">&gt;</span>
+  <span class="t">&lt;</span><span class="k">div</span> class=<span class="c">"mogp-grid mogp-gap-auto"</span><span class="t">&gt;</span>
+    <span class="t">&lt;</span><span class="k">div</span> class=<span class="c">"mogp-span-12 mogp-span-md-6"</span><span class="t">&gt;</span>…<span class="t">&lt;/</span><span class="k">div</span><span class="t">&gt;</span>
+    <span class="t">&lt;</span><span class="k">div</span> class=<span class="c">"mogp-span-12 mogp-span-md-6"</span><span class="t">&gt;</span>…<span class="t">&lt;/</span><span class="k">div</span><span class="t">&gt;</span>
+  <span class="t">&lt;/</span><span class="k">div</span><span class="t">&gt;</span>
+<span class="t">&lt;/</span><span class="k">div</span><span class="t">&gt;</span></div>
+      </div>
+
+      <div class="step mogp-span-12 mogp-span-md-6 mogp-span-lg-4">
+        <span class="step-num">3</span>
+        <h3>Configure <span style="color:var(--muted);font-weight:500">(optional)</span></h3>
+        <p>Using Dart Sass? Change columns, breakpoints or namespace in one place.</p>
+<div class="code"><button class="copy" type="button">Copy</button><span class="k">@use</span> <span class="c">"mogp-layout"</span> <span class="k">with</span> (
+  $namespace: <span class="c">"layout"</span>,
+  $grid-columns: <span class="c">16</span>,
+  $container-max: <span class="c">1440px</span>
+);</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MENTAL MODEL ============ -->
+<section class="section" id="model">
+  <div class="mogp-container mogp-pi-auto">
+    <p class="eyebrow">How it thinks</p>
+    <h2>Three layers. Three rules.</h2>
+    <p class="lead">A class only works on the layer it belongs to. Put it anywhere else and it doesn't throw an error. It just does nothing.</p>
+
+    <div class="mogp-grid mogp-gap-auto section-body">
+      <div class="mogp-span-12 mogp-span-lg-7 model" aria-hidden="true">
+        <div class="layer layer-container">
+          <span class="layer-tag">.mogp-container</span>
+          <span class="layer-hint">+ pi-* · pi-auto</span>
+          <div class="layer layer-grid">
+            <span class="layer-tag">.mogp-grid</span>
+            <span class="layer-hint">+ gap-* · gi-* · gb-* · gap-auto</span>
+            <div class="mogp-grid mogp-gap-16">
+              <div class="layer-child mogp-span-12 mogp-span-sm-7"><span class="layer-tag">direct child</span><span class="layer-hint">span · offset · col-start · col-end</span></div>
+              <div class="layer-child mogp-span-12 mogp-span-sm-5" style="background:var(--ink)"><span class="layer-tag" style="color:var(--bg)">direct child</span><span class="layer-hint" style="color:var(--muted)">span-5</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mogp-span-12 mogp-span-lg-5 rules">
+        <div class="rule">
+          <h3>1 · Padding goes on the container</h3>
+          <p><code>pi-*</code> sits on the same element as <code>container</code> or <code>container-full</code>.</p>
+          <span class="ok">class="mogp-container mogp-pi-24"</span>
+          <span class="no">class="mogp-pi-24"</span>
+        </div>
+        <div class="rule">
+          <h3>2 · Gap goes on the grid</h3>
+          <p><code>gap-*</code>, <code>gi-*</code> and <code>gb-*</code> sit on the same element as <code>grid</code>.</p>
+          <span class="ok">class="mogp-grid mogp-gap-24"</span>
+          <span class="no">class="mogp-gap-24"</span>
+        </div>
+        <div class="rule">
+          <h3>3 · Columns go on direct children</h3>
+          <p><code>span</code>, <code>offset</code> and <code>col-*</code> only work one level below a grid.</p>
+          <span class="ok">.mogp-grid &gt; .mogp-span-6</span>
+          <span class="no">.mogp-grid &gt; div &gt; .mogp-span-6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PLAYGROUND ============ -->
+<section class="section" id="playground">
+  <div class="mogp-container mogp-pi-auto">
+    <p class="eyebrow">Playground</p>
+    <h2>Drag the width. Watch the classes.</h2>
+    <p class="lead">The preview is a real viewport, so media queries fire exactly as they would in a browser. The code panel highlights which class wins at the current width.</p>
+
+    <div class="section-body">
+      <div class="pg-presets" role="group" aria-label="Layout presets" id="presets"></div>
+
+      <div class="pg-controls">
+        <div class="flex-between" style="flex-wrap:wrap">
+          <p class="pg-readout" aria-live="polite"><b id="pg-width">1024</b> px <span class="bp-pill" id="pg-bp">lg</span></p>
+          <div class="bp-jumps" id="bp-jumps"></div>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" id="pg-slider" min="320" max="1440" value="1024" aria-label="Preview viewport width">
+          <div class="ticks" id="ticks" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="mogp-grid mogp-gap-auto" style="margin-top:16px">
+        <div class="mogp-span-12 mogp-span-xl-7" style="min-inline-size:0">
+          <div class="browser" style="margin-top:0">
+            <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span id="pg-url">preview · 1024px</span></div>
+            <div class="stage" id="stage">
+              <div class="frame-box" id="frame-box">
+                <iframe id="pg-frame" title="Layout preview" loading="lazy"></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pg-code mogp-span-12 mogp-span-xl-5">
+          <div class="code" id="pg-code"><button class="copy" type="button">Copy</button></div>
+          <div class="legend">
+            <span class="l-on">active</span>
+            <span class="l-off">overridden</span>
+            <span class="l-wait">waiting for a wider screen</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ANATOMY + REFERENCE ============ -->
+<section class="section" id="reference">
+  <div class="mogp-container mogp-pi-auto">
+    <p class="eyebrow">Reference</p>
+    <h2>One naming pattern for everything.</h2>
+
+    <div class="anatomy section-body">
+      <div class="anatomy-word" aria-label="mogp-span-md-6">
+        <span class="part" style="--c:var(--muted)"><span class="part-text">mogp</span><span class="part-label"><b>namespace</b>configurable</span></span>
+        <span class="sep">-</span>
+        <span class="part" style="--c:var(--ink)"><span class="part-text">span</span><span class="part-label"><b>utility</b>what it sets</span></span>
+        <span class="sep">-</span>
+        <span class="part" style="--c:var(--accent)"><span class="part-text">md</span><span class="part-label"><b>breakpoint</b>optional</span></span>
+        <span class="sep">-</span>
+        <span class="part" style="--c:#3B82F6"><span class="part-text">6</span><span class="part-label"><b>value</b>step or count</span></span>
+      </div>
+      <p class="anatomy-note">No breakpoint means “always”. With a breakpoint it means “from this width up”. Mobile first, every time.</p>
+    </div>
+
+    <div class="mogp-grid mogp-gap-auto" style="margin-top:56px">
+      <div class="mogp-span-12 table-scroll">
+        <table class="ref">
+          <thead><tr><th>Class</th><th>Does</th><th>Goes on</th></tr></thead>
+          <tbody>
+            <tr><td>container</td><td>Centers content, caps width at <code>1280px</code>.</td><td class="where">any wrapper</td></tr>
+            <tr><td>container-full</td><td>Same as container, no max width.</td><td class="where">any wrapper</td></tr>
+            <tr><td>pi-{0·16·24·32·40}</td><td>Horizontal padding of the container.</td><td class="where">container</td></tr>
+            <tr><td>pi-auto</td><td>Padding that scales per breakpoint: 16 → 24 → 32 → 40px.</td><td class="where">container</td></tr>
+            <tr><td>grid</td><td>12 equal columns.</td><td class="where">any element</td></tr>
+            <tr><td>gap-{0·8·16·24·32·40·48}</td><td>Row and column gap together.</td><td class="where">grid</td></tr>
+            <tr><td>gi-{…} · gb-{…}</td><td>Column gap only · row gap only.</td><td class="where">grid</td></tr>
+            <tr><td>gap-auto</td><td>Gap that scales per breakpoint: 16 → 24px.</td><td class="where">grid</td></tr>
+            <tr><td>span-{1–12} · span-auto</td><td>How many columns the element takes.</td><td class="where">grid child</td></tr>
+            <tr><td>offset-{1–11} · offset-auto</td><td>Pushes the element N columns right.</td><td class="where">grid child</td></tr>
+            <tr><td>col-start-{1–13} · col-end-{1–13}</td><td>Exact start / end column line.</td><td class="where">grid child</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p style="margin-top:28px;font-size:.95rem">Add a breakpoint to any utility except <code>container</code>, <code>grid</code>, <code>pi-auto</code> and <code>gap-auto</code>:</p>
+    <div class="bps">
+      <div class="bp"><b>base</b><span>0px +</span></div>
+      <div class="bp"><b>sm</b><span>640px +</span></div>
+      <div class="bp"><b>md</b><span>768px +</span></div>
+      <div class="bp"><b>lg</b><span>1024px +</span></div>
+      <div class="bp"><b>xl</b><span>1280px +</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CUSTOMIZE ============ -->
+<section class="section" id="customize">
+  <div class="mogp-container mogp-pi-auto">
+    <div class="mogp-grid mogp-gap-auto mogp-gap-lg-48">
+      <div class="mogp-span-12 mogp-span-lg-5">
+        <p class="eyebrow">Make it yours</p>
+        <h2>Configured once. Checked at build time.</h2>
+        <p class="lead">Every token is an SCSS variable. Change it in one place and all classes and responsive variants regenerate to match.</p>
+        <ul class="feature-list">
+          <li>Any column count, any breakpoint names</li>
+          <li>Namespace applied to classes <em>and</em> CSS variables</li>
+          <li>Turn off utility groups you don't use</li>
+          <li>Optional <code>:where()</code> selectors and <code>@layer</code></li>
+        </ul>
+      </div>
+      <div class="mogp-span-12 mogp-span-lg-7" style="min-inline-size:0">
+<div class="code"><button class="copy" type="button">Copy</button><span class="k">@use</span> <span class="c">"mogp-layout"</span> <span class="k">with</span> (
+  $breakpoints: (
+    mobile: <span class="c">480px</span>,
+    tablet: <span class="c">768px</span>,
+    desktop: <span class="c">1200px</span>
+  ),
+  $container-padding-inline-auto: (
+    base: <span class="c">16px</span>, mobile: <span class="c">16px</span>,
+    tablet: <span class="c">24px</span>, desktop: <span class="c">40px</span>
+  ),
+  $gap-auto-values: (
+    base: <span class="c">16px</span>, mobile: <span class="c">16px</span>,
+    tablet: <span class="c">24px</span>, desktop: <span class="c">24px</span>
+  ),
+  $mogp-output-col-end-utilities: <span class="c">false</span>
+);</div>
+        <p style="margin-top:18px;font-size:.85rem;color:var(--muted)">Forget the <code>tablet</code> key in <code>$gap-auto-values</code> and the build stops instead of shipping broken CSS:</p>
+        <div class="error"><b>Error:</b> [MOGP] `$gap-auto-values` is missing breakpoint key `tablet`, which exists in `$breakpoints`. Add a `tablet` entry to `$gap-auto-values`.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="mogp-container mogp-pi-auto flex-between" style="flex-wrap:wrap">
+    <span>MOGP Layout System · v0.1.0 · MIT</span>
+    <a href="https://github.com/withmehmet/mogp-layout" target="_blank" rel="noopener">github.com/withmehmet/mogp-layout</a>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const BREAKPOINTS = [['sm', 640], ['md', 768], ['lg', 1024], ['xl', 1280]];
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- 12-column guides ---------- */
+  document.querySelectorAll('[data-guide]').forEach(guide => {
+    guide.innerHTML = '<span class="mogp-span-1"></span>'.repeat(12);
+  });
+
+  /* ---------- copy buttons ---------- */
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const text = btn.parentElement.innerText.replace(btn.innerText, '').trim();
+      try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; }
+      catch { btn.textContent = 'Press Ctrl+C'; }
+      setTimeout(() => (btn.textContent = 'Copy'), 1400);
+    });
+  });
+
+  /* ---------- hero: a live grid cycling through layouts ---------- */
+  const HERO_STATES = [
+    ['span-4', 'span-4', 'span-4'],
+    ['span-8', 'span-4', 'span-12'],
+    ['span-3', 'span-6', 'span-3'],
+    ['span-6 offset-3', 'span-5', 'span-7'],
+  ];
+  const heroCells = [...document.querySelectorAll('#hero-grid .cell')];
+  const heroCaption = document.getElementById('hero-caption');
+  let heroIndex = 0;
+
+  function applyHeroState(index) {
+    heroCells.forEach((cell, i) => {
+      const classes = HERO_STATES[index][i].split(' ');
+      cell.className = cell.className.replace(/\bmogp-\S+/g, '').trim();
+      classes.forEach(c => cell.classList.add('mogp-' + c));
+      cell.textContent = classes.join(' ');
+    });
+    heroCaption.innerHTML = HERO_STATES[index].map(s => '<b>' + s + '</b>').join('  ·  ');
+  }
+
+  function animateHero() {
+    const first = heroCells.map(c => c.getBoundingClientRect());
+    heroIndex = (heroIndex + 1) % HERO_STATES.length;
+    applyHeroState(heroIndex);
+    heroCells.forEach((cell, i) => {
+      const last = cell.getBoundingClientRect();
+      const dx = first[i].left - last.left, dy = first[i].top - last.top;
+      const sx = first[i].width / last.width, sy = first[i].height / last.height;
+      cell.animate(
+        [{ transformOrigin: 'top left', transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+         { transformOrigin: 'top left', transform: 'none' }],
+        { duration: 600, easing: 'cubic-bezier(.2,.8,.2,1)' }
+      );
+    });
+  }
+
+  applyHeroState(0);
+  if (!reduceMotion) setInterval(animateHero, 2800);
+
+  /* ---------- playground ---------- */
+  // Each preset is the single source for both the preview markup and the code panel.
+  const PRESETS = {
+    'Card row': {
+      container: 'mogp-container mogp-pi-auto',
+      grid: 'mogp-grid mogp-gap-auto',
+      items: [
+        ['Card 1', 'mogp-span-12 mogp-span-md-6 mogp-span-lg-4'],
+        ['Card 2', 'mogp-span-12 mogp-span-md-6 mogp-span-lg-4'],
+        ['Card 3', 'mogp-span-12 mogp-span-lg-4'],
+      ],
+    },
+    'Sidebar': {
+      container: 'mogp-container mogp-pi-auto',
+      grid: 'mogp-grid mogp-gap-16 mogp-gap-lg-32',
+      items: [
+        ['Sidebar', 'mogp-span-12 mogp-span-lg-3', 'tall'],
+        ['Main', 'mogp-span-12 mogp-span-lg-9', 'tall'],
+      ],
+    },
+    'Centered article': {
+      container: 'mogp-container mogp-pi-auto',
+      grid: 'mogp-grid mogp-gap-auto',
+      items: [
+        ['Article', 'mogp-span-12 mogp-span-md-8 mogp-offset-md-2 mogp-span-lg-6 mogp-offset-lg-3', 'tall'],
+      ],
+    },
+    'Dashboard': {
+      container: 'mogp-container-full mogp-pi-auto',
+      grid: 'mogp-grid mogp-gap-auto',
+      items: [
+        ['KPI', 'mogp-span-6 mogp-span-lg-3'],
+        ['KPI', 'mogp-span-6 mogp-span-lg-3'],
+        ['KPI', 'mogp-span-6 mogp-span-lg-3'],
+        ['KPI', 'mogp-span-6 mogp-span-lg-3'],
+        ['Chart', 'mogp-span-12 mogp-span-xl-8', 'tall'],
+        ['Activity', 'mogp-span-12 mogp-span-xl-4', 'tall'],
+      ],
+    },
+  };
+
+  const UTILITY_RE = /^mogp-(span|offset|col-start|col-end|gap|gi|gb|pi)-(?:(sm|md|lg|xl)-)?(.+)$/;
+  const minWidthOf = bp => (bp ? BREAKPOINTS.find(([name]) => name === bp)[1] : 0);
+
+  // For one element's class list at a given viewport width, returns each class's state:
+  // 'on' (wins its utility group), 'off' (applies but is overridden), 'wait' (breakpoint not reached)
+  // or 'plain' (not breakpoint-dependent).
+  function classStates(classList, width) {
+    const parsed = classList.split(' ').map(name => {
+      const m = name.match(UTILITY_RE);
+      return m ? { name, group: m[1], min: minWidthOf(m[2]) } : { name, group: null };
+    });
+    const winners = {};
+    parsed.forEach((p, i) => {
+      if (!p.group || p.min > width) return;
+      const current = winners[p.group];
+      if (current === undefined || parsed[current].min <= p.min) winners[p.group] = i;
+    });
+    return parsed.map((p, i) => ({
+      name: p.name,
+      state: !p.group ? 'plain' : p.min > width ? 'wait' : winners[p.group] === i ? 'on' : 'off',
+    }));
+  }
+
+  const frame = document.getElementById('pg-frame');
+  const frameBox = document.getElementById('frame-box');
+  const stage = document.getElementById('stage');
+  const slider = document.getElementById('pg-slider');
+  const codeEl = document.getElementById('pg-code');
+  const widthEl = document.getElementById('pg-width');
+  const bpEl = document.getElementById('pg-bp');
+  const urlEl = document.getElementById('pg-url');
+  const presetsEl = document.getElementById('presets');
+  const jumpsEl = document.getElementById('bp-jumps');
+  const ticksEl = document.getElementById('ticks');
+
+  let presetName = 'Card row';
+  // Start small screens on a phone-sized preview; a scaled-down desktop would be unreadable there.
+  let frameWidth = stage.clientWidth < 640 ? 375 : +slider.value;
+  let frameHeight = 320;
+
+  const escapeHtml = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  function frameDocument(preset) {
+    const items = preset.items.map(([label, cls, size], i) =>
+      `<div class="${cls} item${size ? ' ' + size : ''}${i % 3 === 1 ? ' alt' : ''}" data-id="${i}"><strong>${escapeHtml(label)}</strong><span class="meta"></span></div>`
+    ).join('');
+    return `<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="mogp-layout-full.css">
+<style>
+  :root{--bg:#FAFAF7;--accent:#E8512A;--ink:#141413;--line:#E6E5DF}
+  @media (prefers-color-scheme:dark){:root{--bg:#111110;--accent:#FF6A42;--ink:#F4F3EE;--line:#2A2A28}}
+  html,body{margin:0;background:var(--bg)}
+  body{padding-block:24px;font-family:"Geist Mono",ui-monospace,monospace}
+  .wrap{outline:1px dashed var(--line);outline-offset:-1px}
+  .item{min-block-size:84px;border-radius:6px;background:var(--accent);color:#fff;padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;font-size:12px}
+  .item.alt{background:var(--ink);color:var(--bg)}
+  .item.tall{min-block-size:180px}
+  .item strong{font-weight:600;font-family:system-ui,sans-serif;font-size:13px}
+  .meta{opacity:.85;overflow-wrap:anywhere}
+</style></head><body>
+<div class="${preset.container} wrap"><div class="${preset.grid}">${items}</div></div>
+<script>
+  // offsetHeight of <html> is the content height; scrollHeight would never shrink below the viewport.
+  const report = () => parent.postMessage({ mogpFrame: true, height: document.documentElement.offsetHeight }, '*');
+  new ResizeObserver(report).observe(document.body);
+  addEventListener('message', e => {
+    if (!e.data || !e.data.labels) return;
+    for (const [id, text] of Object.entries(e.data.labels)) {
+      const el = document.querySelector('[data-id="' + id + '"] .meta');
+      if (el) el.textContent = text;
+    }
+  });
+<\/script></body></html>`;
+  }
+
+  function renderCode(preset, width) {
+    const attr = cls => {
+      const toks = classStates(cls, width)
+        .map(({ name, state }) => `<span class="tok is-${state}">${name}</span>`).join(' ');
+      return `class=<span class="c">"${toks}"</span>`;
+    };
+    const open = (cls, indent) => `${indent}<span class="t">&lt;</span><span class="k">div</span> ${attr(cls)}<span class="t">&gt;</span>`;
+    const close = indent => `${indent}<span class="t">&lt;/</span><span class="k">div</span><span class="t">&gt;</span>`;
+    const lines = [
+      open(preset.container, ''),
+      open(preset.grid, '  '),
+      ...preset.items.map(([label, cls]) => open(cls, '    ') + escapeHtml(label) + close('')),
+      close('  '),
+      close(''),
+    ];
+    const copyBtn = codeEl.querySelector('.copy');
+    codeEl.innerHTML = lines.join('\n');
+    codeEl.prepend(copyBtn);
+  }
+
+  function sendLabels() {
+    const preset = PRESETS[presetName];
+    const labels = {};
+    preset.items.forEach(([, cls], i) => {
+      labels[i] = classStates(cls, frameWidth)
+        .filter(t => t.state === 'on').map(t => t.name.replace('mogp-', '')).join(' ');
+    });
+    frame.contentWindow && frame.contentWindow.postMessage({ labels }, '*');
+  }
+
+  function activeBreakpoint(width) {
+    let active = 'base';
+    BREAKPOINTS.forEach(([name, min]) => { if (width >= min) active = name; });
+    return active;
+  }
+
+  function layoutFrame() {
+    const available = stage.clientWidth - 36;
+    const scale = Math.min(1, available / frameWidth);
+    frame.style.width = frameWidth + 'px';
+    frame.style.height = frameHeight + 'px';
+    frame.style.transform = `scale(${scale})`;
+    frameBox.style.width = frameWidth * scale + 'px';
+    frameBox.style.height = frameHeight * scale + 'px';
+  }
+
+  function setWidth(width) {
+    frameWidth = width;
+    slider.value = width;
+    const bp = activeBreakpoint(width);
+    widthEl.textContent = width;
+    bpEl.textContent = bp;
+    urlEl.textContent = `preview · ${width}px` + (stage.clientWidth - 36 < width ? ' · scaled to fit' : '');
+    jumpsEl.querySelectorAll('button').forEach(b => b.classList.toggle('is-active', b.dataset.bp === bp));
+    layoutFrame();
+    renderCode(PRESETS[presetName], width);
+    sendLabels();
+  }
+
+  function loadPreset(name) {
+    presetName = name;
+    presetsEl.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.name === name));
+    frame.srcdoc = frameDocument(PRESETS[name]);
+    setWidth(frameWidth);
+  }
+
+  // controls
+  Object.keys(PRESETS).forEach(name => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip';
+    chip.dataset.name = name;
+    chip.textContent = name;
+    chip.addEventListener('click', () => loadPreset(name));
+    presetsEl.append(chip);
+  });
+
+  [['base', 375], ...BREAKPOINTS].forEach(([name, min]) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.bp = name;
+    btn.textContent = name === 'base' ? 'base · 375' : `${name} · ${min}`;
+    btn.addEventListener('click', () => setWidth(min));
+    jumpsEl.append(btn);
+  });
+
+  const range = slider.max - slider.min;
+  BREAKPOINTS.forEach(([name, min]) => {
+    const tick = document.createElement('span');
+    tick.style.left = `calc(${(min - slider.min) / range * 100}% + ${8 - 16 * (min - slider.min) / range}px)`;
+    tick.textContent = name;
+    ticksEl.append(tick);
+  });
+
+  slider.addEventListener('input', () => setWidth(+slider.value));
+  frame.addEventListener('load', sendLabels);
+  addEventListener('message', e => {
+    if (e.source !== frame.contentWindow || !e.data || !e.data.mogpFrame) return;
+    const height = Math.max(160, e.data.height);
+    if (height === frameHeight) return;
+    frameHeight = height;
+    layoutFrame();
+  });
+  // Only react to the stage getting wider or narrower; its height follows the frame.
+  let stageWidth = stage.clientWidth;
+  new ResizeObserver(() => {
+    if (stage.clientWidth === stageWidth) return;
+    stageWidth = stage.clientWidth;
+    setWidth(frameWidth);
+  }).observe(stage);
+
+  loadPreset(presetName);
+})();
+</script>
+</body>
+</html>
