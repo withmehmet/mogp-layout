@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Landing page example · MOGP</title>
+<meta name="description" content="A product landing page built with the MOGP Layout System: hero, logos, features, alternating sections, stats, testimonials, pricing, FAQ and call to action.">
+<link rel="stylesheet" href="../mogp-layout-full.css">
+<link rel="stylesheet" href="examples.css">
+<style>
+  /* Header and hero stay dark in both color schemes: the tokens are re-declared for these subtrees only. */
+  .site-header, .hero {
+    --ink: #F5F4EF; --text: #CFCEC7; --muted: #A3A29B; --line: #2A2A27; --line-strong: #3A3A36;
+    --surface: #171716; --surface-2: #1F1F1D;
+    --accent: #8DB8FF; --accent-soft: #14233D; --accent-fill: #8DB8FF; --on-accent: #0B1B33;
+    background: #0E0E0D;
+  }
+  .site-header { backdrop-filter: none; }
+
+  .hero { padding-block: clamp(40px, 7vw, 96px) clamp(48px, 7vw, 96px); }
+  .hero h1 { margin-block: 18px 22px; }
+
+  /* Product mock built from divs, so the page ships no images */
+  .mock { border: 1px solid var(--line-strong); border-radius: 16px; background: var(--surface); box-shadow: 0 30px 60px -30px rgba(20,20,19,.35); overflow: hidden; }
+  .mock-bar { display: flex; gap: 6px; padding: 12px 14px; border-block-end: 1px solid var(--line); background: var(--surface-2); }
+  .mock-bar i { inline-size: 10px; block-size: 10px; border-radius: 50%; background: var(--line-strong); }
+  .mock-body { display: grid; grid-template-columns: 56px 1fr; min-block-size: 280px; }
+  .mock-side { border-inline-end: 1px solid var(--line); padding: 14px 10px; display: grid; gap: 10px; align-content: start; }
+  .mock-side i { block-size: 28px; border-radius: 8px; background: var(--surface-2); }
+  .mock-side i:first-child { background: var(--accent-soft); }
+  .mock-main { padding: 18px; display: grid; gap: 14px; align-content: start; }
+  .mock-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .mock-row div { block-size: 56px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
+  .mock-chart { block-size: 120px; border-radius: 10px; border: 1px solid var(--line); background: var(--accent-soft); }
+
+  .logos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px 16px; align-items: center; color: var(--muted); font-weight: 700; letter-spacing: -.02em; font-size: 1.15rem; opacity: .85; }
+  .logos span { text-align: center; }
+  @media (min-width: 768px) { .logos { grid-template-columns: repeat(6, 1fr); } }
+
+  .stat-num { font-size: clamp(2.25rem, 1.6rem + 2.6vw, 3.5rem); font-weight: 700; letter-spacing: -.03em; color: var(--ink); line-height: 1; }
+
+  .quote p { font-size: 1.05rem; color: var(--ink); }
+  .stars { color: var(--accent); letter-spacing: 2px; font-size: .9rem; }
+
+  .plan { display: flex; flex-direction: column; gap: 20px; block-size: 100%; }
+  .plan.pro { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink), var(--shadow); }
+  .price { font-size: 3rem; font-weight: 700; letter-spacing: -.03em; color: var(--ink); line-height: 1; }
+  .price small { font-size: 1rem; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+  .ticks { display: grid; gap: 10px; font-size: .92rem; }
+  .ticks li { display: flex; gap: 10px; align-items: flex-start; }
+  .ticks svg { inline-size: 18px; block-size: 18px; color: var(--ok); flex: none; margin-block-start: 3px; }
+  .plan .btn { margin-block-start: auto; }
+
+  details.faq { border-block-end: 1px solid var(--line); padding-block: 18px; }
+  details.faq summary { cursor: pointer; font-weight: 600; color: var(--ink); list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  details.faq summary::-webkit-details-marker { display: none; }
+  details.faq summary::after { content: "+"; font-weight: 400; font-size: 1.4rem; line-height: 1; color: var(--muted); }
+  details.faq[open] summary::after { content: "–"; }
+  details.faq p { margin-block-start: 10px; color: var(--muted); }
+
+  .cta { background: var(--ink); color: var(--bg); border-radius: 24px; padding: clamp(32px, 6vw, 72px); text-align: center; position: relative; overflow: hidden; }
+  .cta h2 { color: var(--bg); }
+  .cta p { color: color-mix(in srgb, var(--bg) 70%, transparent); }
+  .cta .btn { background: var(--bg); color: var(--ink); }
+  .cta .btn.ghost { background: transparent; color: var(--bg); border-color: color-mix(in srgb, var(--bg) 35%, transparent); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 20 20"><path d="m4.5 10.5 3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 20 20"><path d="M11 2 4 11h5l-1 7 7-9h-5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 20 20"><rect x="4" y="9" width="12" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 9V6a3 3 0 0 1 6 0v3" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 20 20"><path d="M3 16V4M3 16h14M7 13v-3M11 13V7M15 13V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-users" viewBox="0 0 20 20"><circle cx="8" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 16a5.5 5.5 0 0 1 11 0M14 4.5a3 3 0 0 1 0 5.5M17.5 16a5 5 0 0 0-3-4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-plug" viewBox="0 0 20 20"><path d="M7 2v4M13 2v4M5 6h10v4a5 5 0 0 1-10 0zM10 15v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 10h15M10 2.5c2.5 2.2 2.5 12.8 0 15M10 2.5c-2.5 2.2-2.5 12.8 0 15" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+</svg>
+
+<a class="skip" href="#content">Skip to content</a>
+
+<div class="topbar">
+  <div class="mogp-container mogp-pi-auto">
+    <span>MOGP example · Landing page</span>
+    <a href="../index.html#examples">← All examples</a>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="mogp-container mogp-pi-auto bar">
+    <a class="brand" href="#">Brand</a>
+    <nav class="nav grow" aria-label="Main">
+      <a href="#features">Features</a><a href="#customers">Customers</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn ghost sm" href="#">Sign in</a>
+    <a class="btn sm" href="#pricing">Start free</a>
+  </div>
+</header>
+
+<main id="content">
+
+  <!-- Hero: copy 6 · product 6 from lg -->
+  <section class="hero">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="mogp-grid mogp-gap-auto mogp-gap-lg-48" style="align-items:center" data-mogp-grid="grid gap-auto gap-lg-48">
+        <div class="mogp-span-12 mogp-span-lg-6" data-mogp="span-12 span-lg-6">
+          <span class="badge accent"><span class="dot"></span>New · Version 2.0 is live</span>
+          <h1>Know what your product is doing. Instantly.</h1>
+          <p class="lead" style="max-inline-size:52ch">Turn raw events into dashboards your whole team understands, with no queries to write and no pipeline to maintain.</p>
+          <div class="row" style="margin-block-start:32px">
+            <a class="btn" href="#pricing">Start free trial <svg><use href="#i-arrow"/></svg></a>
+            <a class="btn ghost" href="#features">See how it works</a>
+          </div>
+          <div class="row small muted" style="margin-block-start:28px; gap:14px">
+            <div class="avatar-stack"><span class="avatar" style="--h:210"></span><span class="avatar" style="--h:200"></span><span class="avatar" style="--h:222"></span><span class="avatar" style="--h:232"></span></div>
+            <span>Trusted by 4,200+ product teams</span>
+          </div>
+        </div>
+        <div class="mogp-span-12 mogp-span-lg-6" data-mogp="span-12 span-lg-6">
+          <div class="mock" role="img" aria-label="Illustration of the product dashboard">
+            <div class="mock-bar"><i></i><i></i><i></i></div>
+            <div class="mock-body">
+              <div class="mock-side"><i></i><i></i><i></i><i></i></div>
+              <div class="mock-main"><div class="mock-row"><div></div><div></div><div></div></div><div class="mock-chart"></div><div class="mock-row"><div></div><div></div><div></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Logo strip: 2 per row on phones, 6 from md -->
+  <section class="section tight alt">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <p class="center small muted" style="margin-block-end:28px">Powering analytics at fast-moving companies</p>
+      <div class="logos" aria-label="Customer logos"><span>Company A</span><span>Company B</span><span>Company C</span><span>Company D</span><span>Company E</span><span>Company F</span></div>
+    </div>
+  </section>
+
+  <!-- Features: 1 → 2 → 3 columns -->
+  <section class="section" id="features">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="section-head center">
+        <p class="eyebrow">Features</p>
+        <h2>Everything you need to see the full picture</h2>
+        <p>Six building blocks that cover the path from first event to board-ready report.</p>
+      </div>
+      <div class="mogp-grid mogp-gap-auto" data-mogp-grid="grid gap-auto">
+        <div class="card flat mogp-span-12 mogp-span-sm-6 mogp-span-lg-4" data-mogp="span-12 span-sm-6 span-lg-4"><div class="icon-tile"><svg><use href="#i-bolt"/></svg></div><h3 style="margin-block:18px 8px">Real-time events</h3><p class="muted">Data appears in seconds, not hours, so you can react while it still matters.</p></div>
+        <div class="card flat mogp-span-12 mogp-span-sm-6 mogp-span-lg-4" data-mogp="span-12 span-sm-6 span-lg-4"><div class="icon-tile"><svg><use href="#i-chart"/></svg></div><h3 style="margin-block:18px 8px">Self-serve dashboards</h3><p class="muted">Drag, drop and share. Anyone on the team can answer their own questions.</p></div>
+        <div class="card flat mogp-span-12 mogp-span-sm-6 mogp-span-lg-4" data-mogp="span-12 span-sm-6 span-lg-4"><div class="icon-tile"><svg><use href="#i-users"/></svg></div><h3 style="margin-block:18px 8px">Cohorts &amp; funnels</h3><p class="muted">Follow groups of users over time and find the exact step where they drop off.</p></div>
+        <div class="card flat mogp-span-12 mogp-span-sm-6 mogp-span-lg-4" data-mogp="span-12 span-sm-6 span-lg-4"><div class="icon-tile"><svg><use href="#i-plug"/></svg></div><h3 style="margin-block:18px 8px">80+ integrations</h3><p class="muted">Connect your warehouse, CRM and billing tools in a few clicks.</p></div>
+        <div class="card flat mogp-span-12 mogp-span-sm-6 mogp-span-lg-4" data-mogp="span-12 span-sm-6 span-lg-4"><div class="icon-tile"><svg><use href="#i-lock"/></svg></div><h3 style="margin-block:18px 8px">Enterprise security</h3><p class="muted">SSO, audit logs and field-level controls. SOC 2 Type II certified.</p></div>
+        <div class="card flat mogp-span-12 mogp-span-sm-6 mogp-span-lg-4" data-mogp="span-12 span-sm-6 span-lg-4"><div class="icon-tile"><svg><use href="#i-globe"/></svg></div><h3 style="margin-block:18px 8px">Global by default</h3><p class="muted">EU and US data residency, multi-currency and fully localized reports.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Alternating rows: text and visual swap sides with col-start -->
+  <section class="section alt">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="mogp-grid mogp-gap-auto mogp-gap-lg-48" style="align-items:center; row-gap:56px" data-mogp-grid="grid gap-auto gap-lg-48">
+        <div class="mogp-span-12 mogp-span-lg-5" data-mogp="span-12 span-lg-5">
+          <p class="eyebrow">Insights</p>
+          <h2 style="font-size:clamp(1.6rem,1.2rem + 1.4vw,2.25rem)">Answers, not dashboards to maintain</h2>
+          <p class="muted" style="margin-block:14px 22px">Ask a question in plain language and get the chart, the trend explained and anything unusual flagged.</p>
+          <ul class="ticks"><li><svg><use href="#i-check"/></svg>Natural-language queries</li><li><svg><use href="#i-check"/></svg>Automatic anomaly alerts</li><li><svg><use href="#i-check"/></svg>Scheduled digests to Slack or email</li></ul>
+        </div>
+        <div class="mogp-span-12 mogp-span-lg-6 mogp-col-start-lg-7" data-mogp="span-12 span-lg-6 col-start-lg-7"><div class="art" style="--h:208; --ratio:4/3"></div></div>
+
+        <!-- Visual comes first in the source so auto-placement keeps both items on the same row. -->
+        <div class="mogp-span-12 mogp-span-lg-6" data-mogp="span-12 span-lg-6"><div class="art" style="--h:200; --ratio:4/3"></div></div>
+        <div class="mogp-span-12 mogp-span-lg-5 mogp-col-start-lg-8" data-mogp="span-12 span-lg-5 col-start-lg-8">
+          <p class="eyebrow">Collaboration</p>
+          <h2 style="font-size:clamp(1.6rem,1.2rem + 1.4vw,2.25rem)">One source of truth for the whole team</h2>
+          <p class="muted" style="margin-block:14px 22px">Comment on any metric, assign follow-ups and keep decisions next to the data that drove them.</p>
+          <ul class="ticks"><li><svg><use href="#i-check"/></svg>Threaded comments on charts</li><li><svg><use href="#i-check"/></svg>Role-based sharing</li><li><svg><use href="#i-check"/></svg>Versioned reports</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats: 2 per row, then 4 -->
+  <section class="section">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="mogp-grid mogp-gap-32" style="row-gap:40px" data-mogp-grid="grid gap-32">
+        <div class="mogp-span-6 mogp-span-lg-3" data-mogp="span-6 span-lg-3"><p class="stat-num">4.2k</p><p class="muted small" style="margin-block-start:8px">Active teams</p></div>
+        <div class="mogp-span-6 mogp-span-lg-3" data-mogp="span-6 span-lg-3"><p class="stat-num">9.8B</p><p class="muted small" style="margin-block-start:8px">Events per month</p></div>
+        <div class="mogp-span-6 mogp-span-lg-3" data-mogp="span-6 span-lg-3"><p class="stat-num">99.99%</p><p class="muted small" style="margin-block-start:8px">Uptime, last 12 months</p></div>
+        <div class="mogp-span-6 mogp-span-lg-3" data-mogp="span-6 span-lg-3"><p class="stat-num">&lt;2s</p><p class="muted small" style="margin-block-start:8px">Median query time</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials: 3 up -->
+  <section class="section alt" id="customers">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="section-head"><p class="eyebrow">Customers</p><h2>Loved by teams who ship weekly</h2></div>
+      <div class="mogp-grid mogp-gap-auto" data-mogp-grid="grid gap-auto">
+        <figure class="card quote stack mogp-span-12 mogp-span-md-4" style="margin:0; --stack:18px" data-mogp="span-12 span-md-4">
+          <div class="stars" aria-label="5 out of 5">★★★★★</div>
+          <blockquote style="margin:0"><p>We replaced three tools with one and our weekly review went from an hour to ten minutes.</p></blockquote>
+          <figcaption class="author"><span class="avatar" style="--h:210"></span><div><b>Customer Name</b><span class="small muted">Job Title, Company</span></div></figcaption>
+        </figure>
+        <figure class="card quote stack mogp-span-12 mogp-span-md-4" style="margin:0; --stack:18px" data-mogp="span-12 span-md-4">
+          <div class="stars" aria-label="5 out of 5">★★★★★</div>
+          <blockquote style="margin:0"><p>Finally a tool where our designers can answer data questions without filing a ticket.</p></blockquote>
+          <figcaption class="author"><span class="avatar" style="--h:200"></span><div><b>Customer Name</b><span class="small muted">Job Title, Company</span></div></figcaption>
+        </figure>
+        <figure class="card quote stack mogp-span-12 mogp-span-md-4" style="margin:0; --stack:18px" data-mogp="span-12 span-md-4">
+          <div class="stars" aria-label="5 out of 5">★★★★★</div>
+          <blockquote style="margin:0"><p>The anomaly alerts caught a billing bug before a single customer noticed. Paid for itself in a week.</p></blockquote>
+          <figcaption class="author"><span class="avatar" style="--h:222"></span><div><b>Customer Name</b><span class="small muted">Job Title, Company</span></div></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing: stacked on phones, 3 across from md -->
+  <section class="section" id="pricing">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="section-head center"><p class="eyebrow">Pricing</p><h2>Simple plans that scale with you</h2><p>Start free. Upgrade when your team needs more.</p></div>
+      <div class="mogp-grid mogp-gap-16 mogp-gap-lg-32" data-mogp-grid="grid gap-16 gap-lg-32">
+        <div class="mogp-span-12 mogp-span-md-4" data-mogp="span-12 span-md-4">
+          <div class="card plan">
+            <div><h3>Starter</h3><p class="muted small" style="margin-block-start:6px">For individuals and side projects.</p></div>
+            <p class="price">$0<small> / month</small></p>
+            <ul class="ticks"><li><svg><use href="#i-check"/></svg>10k events / month</li><li><svg><use href="#i-check"/></svg>3 dashboards</li><li><svg><use href="#i-check"/></svg>30-day history</li></ul>
+            <a class="btn ghost" href="#">Get started</a>
+          </div>
+        </div>
+        <div class="mogp-span-12 mogp-span-md-4" data-mogp="span-12 span-md-4">
+          <div class="card plan pro">
+            <div class="row" style="justify-content:space-between"><h3>Team</h3><span class="badge accent">Most popular</span></div>
+            <p class="muted small" style="margin-block-start:-8px">For product teams that ship weekly.</p>
+            <p class="price">$29<small> / seat / month</small></p>
+            <ul class="ticks"><li><svg><use href="#i-check"/></svg>5M events / month</li><li><svg><use href="#i-check"/></svg>Unlimited dashboards</li><li><svg><use href="#i-check"/></svg>Cohorts and funnels</li><li><svg><use href="#i-check"/></svg>Slack and email digests</li></ul>
+            <a class="btn" href="#">Start free trial</a>
+          </div>
+        </div>
+        <div class="mogp-span-12 mogp-span-md-4" data-mogp="span-12 span-md-4">
+          <div class="card plan">
+            <div><h3>Enterprise</h3><p class="muted small" style="margin-block-start:6px">For organizations with advanced needs.</p></div>
+            <p class="price">Custom</p>
+            <ul class="ticks"><li><svg><use href="#i-check"/></svg>Unlimited events</li><li><svg><use href="#i-check"/></svg>SSO and audit logs</li><li><svg><use href="#i-check"/></svg>Data residency options</li><li><svg><use href="#i-check"/></svg>Dedicated support</li></ul>
+            <a class="btn ghost" href="#">Talk to sales</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ: heading 4 · answers 8 -->
+  <section class="section alt" id="faq">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="mogp-grid mogp-gap-auto mogp-gap-lg-48" data-mogp-grid="grid gap-auto gap-lg-48">
+        <div class="mogp-span-12 mogp-span-lg-4" data-mogp="span-12 span-lg-4">
+          <p class="eyebrow">FAQ</p><h2>Questions, answered</h2>
+          <p class="muted" style="margin-block-start:14px">Can't find what you need? <a href="#" style="color:var(--accent)">Contact our team</a>.</p>
+        </div>
+        <div class="mogp-span-12 mogp-span-lg-8" data-mogp="span-12 span-lg-8">
+          <details class="faq" open><summary>Do I need a data engineer to get started?</summary><p>No. Install the snippet or connect your warehouse and dashboards build themselves automatically.</p></details>
+          <details class="faq"><summary>Can I export my data?</summary><p>Yes. Every chart and raw event can be exported as CSV or streamed to your own warehouse at any time.</p></details>
+          <details class="faq"><summary>How does the free trial work?</summary><p>Fourteen days of the Team plan, no credit card required. After that you can pick a plan or drop to Starter.</p></details>
+          <details class="faq"><summary>Is my data secure?</summary><p>Data is encrypted in transit and at rest, and we are SOC 2 Type II certified with optional EU data residency.</p></details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final call to action -->
+  <section class="section">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="mogp-grid" data-mogp-grid="grid">
+        <div class="cta mogp-span-12" data-mogp="span-12">
+          <h2>Start seeing your product clearly</h2>
+          <p style="margin:14px auto 28px; max-inline-size:48ch">Join thousands of teams making better decisions. Set up in minutes.</p>
+          <div class="row" style="justify-content:center"><a class="btn" href="#pricing">Start free trial</a><a class="btn ghost" href="#">Book a demo</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+    <div class="mogp-grid mogp-gap-32" data-mogp-grid="grid gap-32">
+      <div class="mogp-span-12 mogp-span-lg-4" data-mogp="span-12 span-lg-4">
+        <a class="brand" href="#">Brand</a>
+        <p class="muted" style="max-inline-size:32ch; margin-block-start:14px">Product analytics for teams that move fast.</p>
+      </div>
+      <div class="mogp-span-6 mogp-span-lg-2 mogp-col-start-lg-7" data-mogp="span-6 span-lg-2 col-start-lg-7"><h4>Product</h4><ul class="link-list"><li><a href="#">Features</a></li><li><a href="#">Pricing</a></li><li><a href="#">Changelog</a></li></ul></div>
+      <div class="mogp-span-6 mogp-span-lg-2" data-mogp="span-6 span-lg-2"><h4>Company</h4><ul class="link-list"><li><a href="#">About</a></li><li><a href="#">Careers</a></li><li><a href="#">Contact</a></li></ul></div>
+      <div class="mogp-span-6 mogp-span-lg-2" data-mogp="span-6 span-lg-2"><h4>Legal</h4><ul class="link-list"><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">Security</a></li></ul></div>
+    </div>
+    <div class="legal"><span>© 2026 Brand. Fictional product for demonstration.</span><span>Built with MOGP Layout System</span></div>
+  </div>
+</footer>
+
+<script src="examples.js" defer></script>
+</body>
+</html>

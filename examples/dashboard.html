@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard example · MOGP</title>
+<meta name="description" content="An analytics dashboard built with the MOGP Layout System: app shell with sidebar, KPI cards, charts, orders table, activity feed and goals.">
+<link rel="stylesheet" href="../mogp-layout-full.css">
+<link rel="stylesheet" href="examples.css">
+<style>
+  /* App shell: sidebar and content are two grid children. */
+  .shell-side {
+    background: var(--surface); border-block-end: 1px solid var(--line);
+  }
+  .side-inner { display: flex; align-items: center; gap: 8px; padding: 10px 16px; overflow-x: auto; }
+  .side-inner .brand { margin-inline-end: 8px; }
+  .side-group { display: none; }
+  .side-link {
+    display: inline-flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-sm);
+    color: var(--text); text-decoration: none; font-size: .92rem; font-weight: 500; white-space: nowrap;
+  }
+  .side-link svg { inline-size: 18px; block-size: 18px; flex: none; }
+  .side-link:hover { background: var(--surface-2); color: var(--ink); }
+  .side-link[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+  .side-user { display: none; }
+
+  @media (min-width: 1024px) {
+    .shell-side { border-block-end: 0; border-inline-end: 1px solid var(--line); position: sticky; inset-block-start: 0; block-size: 100vh; align-self: start; }
+    .side-inner { flex-direction: column; align-items: stretch; gap: 4px; padding: 20px 16px; overflow: visible; block-size: 100%; }
+    .side-inner .brand { margin: 4px 8px 20px; }
+    .side-group { display: block; font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 18px 12px 6px; }
+    .side-user { display: flex; align-items: center; gap: 10px; margin-block-start: auto; padding: 12px; border-radius: var(--radius); background: var(--surface-2); }
+    .side-user b { display: block; font-size: .88rem; color: var(--ink); line-height: 1.3; }
+  }
+
+  .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; padding-block: 28px 8px; }
+  .page-head h1 { font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem); letter-spacing: -.02em; }
+  .select {
+    min-block-size: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line-strong);
+    background: var(--surface); color: var(--ink); font: 500 .85rem var(--font);
+  }
+
+  /* KPI */
+  .kpi { display: flex; flex-direction: column; gap: 10px; block-size: 100%; }
+  .kpi .label { display: flex; justify-content: space-between; align-items: center; font-size: .85rem; color: var(--muted); }
+  .kpi .stat { font-size: clamp(1.6rem, 1.2rem + 1vw, 2.1rem); font-weight: 700; letter-spacing: -.03em; color: var(--ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .spark { inline-size: 100%; block-size: 36px; color: var(--accent); }
+  .spark.down { color: var(--bad); }
+
+  /* Cards with a header */
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-block-end: 20px; }
+  .card-head h2 { font-size: 1.05rem; letter-spacing: -.01em; font-weight: 600; }
+  .seg { display: inline-flex; padding: 3px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); }
+  .seg button { border: 0; background: none; padding: 5px 12px; border-radius: 6px; font: 500 .8rem var(--font); color: var(--muted); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+
+  .chart { position: relative; }
+  .chart svg { inline-size: 100%; block-size: clamp(200px, 28vw, 280px); overflow: visible; }
+  .chart .axis { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); margin-block-start: 10px; }
+  .legend { display: flex; gap: 18px; font-size: .8rem; color: var(--muted); margin-block-end: 8px; }
+  .legend i { display: inline-block; inline-size: 10px; block-size: 10px; border-radius: 3px; margin-inline-end: 6px; background: var(--accent); }
+  .legend i.prev { background: var(--line-strong); }
+
+  .source { display: grid; gap: 6px; }
+  .source .top { display: flex; justify-content: space-between; font-size: .88rem; }
+  .source .top b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .product { display: flex; align-items: center; gap: 12px; }
+  .product .thumb { inline-size: 40px; block-size: 40px; border-radius: 10px; flex: none; background: hsl(var(--h) 60% 50% / .18); display: grid; place-items: center; color: hsl(var(--h) 55% 38%); font-weight: 700; font-size: .85rem; }
+  @media (prefers-color-scheme: dark) { .product .thumb { color: hsl(var(--h) 80% 70%); } }
+
+  .timeline { display: grid; gap: 0; }
+  .timeline li { position: relative; display: flex; gap: 14px; padding-block-end: 20px; font-size: .9rem; }
+  .timeline li:last-child { padding-block-end: 0; }
+  .timeline li::before { content: ""; position: absolute; inset-inline-start: 4px; inset-block: 14px 0; inline-size: 1px; background: var(--line); }
+  .timeline li:last-child::before { display: none; }
+  .timeline .dot { inline-size: 9px; block-size: 9px; margin-block-start: 6px; flex: none; color: var(--accent); }
+  .timeline b { color: var(--ink); font-weight: 600; }
+  .timeline time { display: block; font-size: .78rem; color: var(--muted); }
+
+  .funnel { display: grid; gap: 10px; }
+  .funnel div { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 8px; font-size: .88rem; background: color-mix(in srgb, var(--accent) calc(var(--p) * 1%), var(--surface-2)); color: var(--ink); inline-size: var(--w); min-inline-size: 150px; }
+  .funnel b { font-variant-numeric: tabular-nums; }
+
+  .page-foot { padding-block: 28px 40px; color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+  .delta { font-size: .78rem; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 20 20"><path d="M3 9.5 10 3l7 6.5V17H12v-5H8v5H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 20 20"><path d="M3 16V4M3 16h14M7 13v-3M11 13V7M15 13V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 20 20"><path d="M4 7h12l-1 10H5zM7 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-users" viewBox="0 0 20 20"><circle cx="8" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 16a5.5 5.5 0 0 1 11 0M14 4.5a3 3 0 0 1 0 5.5M17.5 16a5 5 0 0 0-3-4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-down" viewBox="0 0 16 16"><path d="M8 3v9M4 8.5 8 12.5l4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<a class="skip" href="#content">Skip to content</a>
+
+<!-- Shell: sidebar 3/12 on lg, 2/12 on xl. On smaller screens it becomes a horizontal bar. -->
+<div class="mogp-grid" data-mogp-grid="grid · app shell">
+
+  <aside class="shell-side mogp-span-12 mogp-span-lg-3 mogp-span-xl-2" data-mogp="span-12 span-lg-3 span-xl-2 · sticky" aria-label="Sidebar">
+    <div class="side-inner">
+      <a class="brand" href="#">Brand</a>
+      <span class="side-group">Workspace</span>
+      <nav style="display:contents" aria-label="Main">
+        <a class="side-link" href="#" aria-current="page"><svg><use href="#i-home"/></svg>Overview</a>
+        <a class="side-link" href="#"><svg><use href="#i-chart"/></svg>Analytics</a>
+        <a class="side-link" href="#"><svg><use href="#i-bag"/></svg>Orders</a>
+        <a class="side-link" href="#"><svg><use href="#i-users"/></svg>Customers</a>
+        <a class="side-link" href="#"><svg><use href="#i-gear"/></svg>Settings</a>
+      </nav>
+      <div class="side-user">
+        <span class="avatar" style="--h:210"></span>
+        <div><b>User Name</b><span class="small muted">Admin</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="mogp-span-12 mogp-span-lg-9 mogp-span-xl-10" data-mogp="span-12 span-lg-9 span-xl-10">
+    <div class="topbar"><div class="mogp-container-full mogp-pi-auto" data-mogp-container="container-full pi-auto"><span>MOGP example · Dashboard</span><a href="../index.html#examples">← All examples</a></div></div>
+
+    <main id="content" class="mogp-container-full mogp-pi-auto" data-mogp-container="container-full pi-auto">
+
+      <div class="page-head">
+        <div><p class="muted small">Sunday, 14 June</p><h1>Good morning</h1></div>
+        <div class="row">
+          <label class="sr-only" for="range">Date range</label>
+          <select class="select" id="range"><option>Last 30 days</option><option>Last 7 days</option><option>This quarter</option></select>
+          <a class="btn sm" href="#">Export report</a>
+        </div>
+      </div>
+
+      <div class="mogp-grid mogp-gap-auto" style="margin-block-start:16px" data-mogp-grid="grid gap-auto">
+
+        <!-- KPIs: 2 per row on phones, 4 from lg -->
+        <div class="mogp-span-6 mogp-span-lg-3" data-mogp="span-6 span-lg-3">
+          <div class="card kpi"><div class="label">Revenue <span class="badge ok delta">+12.4%</span></div><div class="stat">$48,920</div>
+            <svg class="spark" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,30 12,26 24,28 36,20 48,22 60,14 72,16 84,8 100,4" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="mogp-span-6 mogp-span-lg-3" data-mogp="span-6 span-lg-3">
+          <div class="card kpi"><div class="label">Orders <span class="badge ok delta">+5.1%</span></div><div class="stat">1,284</div>
+            <svg class="spark" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,24 12,22 24,26 36,18 48,20 60,16 72,18 84,12 100,10" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="mogp-span-6 mogp-span-lg-3" data-mogp="span-6 span-lg-3">
+          <div class="card kpi"><div class="label">Conversion <span class="badge bad delta">−0.8%</span></div><div class="stat">3.42%</div>
+            <svg class="spark down" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,8 12,10 24,8 36,14 48,12 60,18 72,16 84,24 100,26" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="mogp-span-6 mogp-span-lg-3" data-mogp="span-6 span-lg-3">
+          <div class="card kpi"><div class="label">Avg. order <span class="badge ok delta">+3.9%</span></div><div class="stat">$38.10</div>
+            <svg class="spark" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,26 12,24 24,22 36,24 48,18 60,20 72,14 84,12 100,8" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+
+        <!-- Revenue chart 8 · sources 4 from xl -->
+        <section class="mogp-span-12 mogp-span-xl-8" aria-labelledby="h-rev" data-mogp="span-12 span-xl-8">
+          <div class="card" style="block-size:100%">
+            <div class="card-head"><h2 id="h-rev">Revenue over time</h2>
+              <div class="seg" role="group" aria-label="Period"><button type="button" aria-pressed="false">7D</button><button type="button" aria-pressed="true">30D</button><button type="button" aria-pressed="false">90D</button></div></div>
+            <div class="legend"><span><i></i>This period</span><span><i class="prev"></i>Previous</span></div>
+            <div class="chart">
+              <svg viewBox="0 0 640 240" preserveAspectRatio="none" role="img" aria-label="Line chart: revenue is trending up compared with the previous period">
+                <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".28"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+                <g stroke="var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"><path d="M0 40H640M0 100H640M0 160H640M0 220H640" vector-effect="non-scaling-stroke"/></g>
+                <path d="M0 190 58 180 116 185 174 160 232 165 290 140 348 150 406 125 464 130 522 110 580 115 640 95" fill="none" stroke="var(--line-strong)" stroke-width="2" stroke-dasharray="5 5" vector-effect="non-scaling-stroke"/>
+                <path d="M0 170 58 150 116 160 174 120 232 130 290 95 348 110 406 70 464 85 522 50 580 60 640 30 V240 H0Z" fill="url(#g)"/>
+                <path d="M0 170 58 150 116 160 174 120 232 130 290 95 348 110 406 70 464 85 522 50 580 60 640 30" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+              </svg>
+              <div class="axis" aria-hidden="true"><span>May 15</span><span>May 22</span><span>May 29</span><span>Jun 5</span><span>Jun 14</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="mogp-span-12 mogp-span-md-6 mogp-span-xl-4" aria-labelledby="h-src" data-mogp="span-12 span-md-6 span-xl-4">
+          <div class="card" style="block-size:100%">
+            <div class="card-head"><h2 id="h-src">Traffic sources</h2></div>
+            <div class="stack" style="--stack:18px">
+              <div class="source"><div class="top"><span>Organic search</span><b>42%</b></div><div class="bar-track"><div class="bar-fill" style="--v:42%"></div></div></div>
+              <div class="source"><div class="top"><span>Direct</span><b>27%</b></div><div class="bar-track"><div class="bar-fill" style="--v:27%"></div></div></div>
+              <div class="source"><div class="top"><span>Referral</span><b>16%</b></div><div class="bar-track"><div class="bar-fill" style="--v:16%"></div></div></div>
+              <div class="source"><div class="top"><span>Social</span><b>10%</b></div><div class="bar-track"><div class="bar-fill" style="--v:10%"></div></div></div>
+              <div class="source"><div class="top"><span>Email</span><b>5%</b></div><div class="bar-track"><div class="bar-fill" style="--v:5%"></div></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Orders table 8 · activity 4 -->
+        <section class="mogp-span-12 mogp-span-xl-8" aria-labelledby="h-ord" data-mogp="span-12 span-xl-8">
+          <div class="card" style="block-size:100%">
+            <div class="card-head"><h2 id="h-ord">Recent orders</h2><a class="btn ghost sm" href="#">View all</a></div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col" class="num">Total</th></tr></thead>
+                <tbody>
+                  <tr><td><b>#10482</b></td><td><span class="author"><span class="avatar" style="--h:200"></span>Customer 1</span></td><td><span class="badge ok"><span class="dot"></span>Paid</span></td><td class="num">$129.00</td></tr>
+                  <tr><td><b>#10481</b></td><td><span class="author"><span class="avatar" style="--h:222"></span>Customer 2</span></td><td><span class="badge warn"><span class="dot"></span>Pending</span></td><td class="num">$54.50</td></tr>
+                  <tr><td><b>#10480</b></td><td><span class="author"><span class="avatar" style="--h:232"></span>Customer 3</span></td><td><span class="badge ok"><span class="dot"></span>Paid</span></td><td class="num">$212.80</td></tr>
+                  <tr><td><b>#10479</b></td><td><span class="author"><span class="avatar" style="--h:210"></span>Customer 4</span></td><td><span class="badge bad"><span class="dot"></span>Refunded</span></td><td class="num">$39.00</td></tr>
+                  <tr><td><b>#10478</b></td><td><span class="author"><span class="avatar" style="--h:205"></span>Customer 5</span></td><td><span class="badge ok"><span class="dot"></span>Paid</span></td><td class="num">$87.25</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="mogp-span-12 mogp-span-md-6 mogp-span-xl-4" aria-labelledby="h-act" data-mogp="span-12 span-md-6 span-xl-4">
+          <div class="card" style="block-size:100%">
+            <div class="card-head"><h2 id="h-act">Activity</h2></div>
+            <ul class="timeline">
+              <li><span class="dot" aria-hidden="true"></span><div><b>Customer 1</b> placed order #10482<time>2 minutes ago</time></div></li>
+              <li><span class="dot" aria-hidden="true"></span><div><b>Payout</b> of $4,210 sent to bank<time>1 hour ago</time></div></li>
+              <li><span class="dot" aria-hidden="true"></span><div><b>Customer 4</b> requested a refund<time>3 hours ago</time></div></li>
+              <li><span class="dot" aria-hidden="true"></span><div><b>Low stock</b> warning: Product 1<time>Yesterday</time></div></li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Third row: three equal cards on xl -->
+        <section class="mogp-span-12 mogp-span-md-6 mogp-span-xl-4" aria-labelledby="h-top" data-mogp="span-12 span-md-6 span-xl-4">
+          <div class="card" style="block-size:100%">
+            <div class="card-head"><h2 id="h-top">Top products</h2></div>
+            <div class="stack" style="--stack:16px">
+              <div class="product"><span class="thumb" style="--h:210">P1</span><div style="flex:1"><b style="color:var(--ink)">Product 1</b><div class="small muted">312 sold</div></div><b>$9,360</b></div>
+              <div class="product"><span class="thumb" style="--h:200">P2</span><div style="flex:1"><b style="color:var(--ink)">Product 2</b><div class="small muted">204 sold</div></div><b>$7,140</b></div>
+              <div class="product"><span class="thumb" style="--h:222">P3</span><div style="flex:1"><b style="color:var(--ink)">Product 3</b><div class="small muted">188 sold</div></div><b>$3,384</b></div>
+              <div class="product"><span class="thumb" style="--h:232">P4</span><div style="flex:1"><b style="color:var(--ink)">Product 4</b><div class="small muted">161 sold</div></div><b>$2,415</b></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="mogp-span-12 mogp-span-md-6 mogp-span-xl-4" aria-labelledby="h-fun" data-mogp="span-12 span-md-6 span-xl-4">
+          <div class="card" style="block-size:100%">
+            <div class="card-head"><h2 id="h-fun">Conversion funnel</h2></div>
+            <div class="funnel">
+              <div style="--w:100%; --p:30"><span>Visitors</span><b>38,200</b></div>
+              <div style="--w:74%;  --p:24"><span>Product views</span><b>28,100</b></div>
+              <div style="--w:42%;  --p:18"><span>Added to cart</span><b>16,040</b></div>
+              <div style="--w:24%;  --p:12"><span>Checkout</span><b>9,180</b></div>
+              <div style="--w:14%;  --p:8"><span>Paid</span><b>1,284</b></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="mogp-span-12 mogp-span-md-6 mogp-span-xl-4" aria-labelledby="h-goal" data-mogp="span-12 span-md-6 span-xl-4">
+          <div class="card" style="block-size:100%">
+            <div class="card-head"><h2 id="h-goal">Monthly goals</h2><span class="badge">June</span></div>
+            <div class="stack" style="--stack:22px">
+              <div class="source"><div class="top"><span>Revenue · $60k</span><b>82%</b></div><div class="bar-track"><div class="bar-fill" style="--v:82%"></div></div></div>
+              <div class="source"><div class="top"><span>New customers · 400</span><b>64%</b></div><div class="bar-track"><div class="bar-fill" style="--v:64%"></div></div></div>
+              <div class="source"><div class="top"><span>Repeat rate · 35%</span><b>91%</b></div><div class="bar-track"><div class="bar-fill" style="--v:91%"></div></div></div>
+              <div class="source"><div class="top"><span>Support CSAT · 95%</span><b>97%</b></div><div class="bar-track"><div class="bar-fill" style="--v:97%"></div></div></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="page-foot"><span>Sample data for demonstration.</span><span>Built with MOGP Layout System</span></div>
+    </main>
+  </div>
+</div>
+
+<script src="examples.js" defer></script>
+</body>
+</html>

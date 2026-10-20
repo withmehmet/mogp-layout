@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog example · MOGP</title>
+<meta name="description" content="A publication layout built with the MOGP Layout System: featured story, post grid, reading view with sticky table of contents, newsletter and footer.">
+<link rel="stylesheet" href="../mogp-layout-full.css">
+<link rel="stylesheet" href="examples.css">
+<style>
+  /* Blog-only styling: reading typography and the sticky table of contents. */
+  .post-card { display: flex; flex-direction: column; gap: 16px; text-decoration: none; }
+  .post-card h3 { font-size: 1.2rem; transition: color .15s; }
+  .post-card:hover h3 { color: var(--accent); }
+  .post-card .art { transition: transform .3s; }
+  .post-card:hover .art { transform: translateY(-3px); }
+  @media (prefers-reduced-motion: reduce) { .post-card .art, .post-card h3 { transition: none; } .post-card:hover .art { transform: none; } }
+
+  .featured h1 { margin-block: 16px 20px; }
+
+  .toc { font-size: .9rem; }
+  .toc summary { cursor: pointer; font-weight: 600; color: var(--ink); padding-block: 8px; }
+  .toc ol { list-style: none; margin: 8px 0 0; padding: 0; border-inline-start: 1px solid var(--line); }
+  .toc a { display: block; padding: 6px 14px; margin-inline-start: -1px; border-inline-start: 2px solid transparent; color: var(--muted); text-decoration: none; }
+  .toc a:hover, .toc a[aria-current="true"] { color: var(--ink); border-inline-start-color: var(--accent); }
+  @media (min-width: 1024px) {
+    .is-sticky { position: sticky; inset-block-start: 88px; align-self: start; }
+    .toc summary { pointer-events: none; }
+    .toc summary::marker, .toc summary::-webkit-details-marker { display: none; }
+  }
+
+  .prose { font-size: 1.125rem; line-height: 1.75; color: var(--text); }
+  .prose > * + * { margin-block-start: 1.25em; }
+  .prose h2 { font-size: 1.75rem; margin-block-start: 2em; }
+  .prose h3 { font-size: 1.25rem; margin-block-start: 1.75em; }
+  .prose a { color: var(--accent); text-underline-offset: 3px; }
+  .prose blockquote { margin-inline: 0; padding: 4px 0 4px 24px; border-inline-start: 3px solid var(--accent); font-size: 1.3rem; line-height: 1.5; color: var(--ink); letter-spacing: -.01em; }
+  .prose pre { margin: 0; padding: 20px; border-radius: var(--radius); background: var(--ink); color: var(--bg); overflow-x: auto; font: .85rem/1.7 var(--font-mono); }
+  .prose pre code { background: none; padding: 0; color: inherit; }
+  .prose figure { margin: 0; }
+  .prose figcaption { margin-block-start: 10px; font-size: .85rem; color: var(--muted); }
+  .prose ul { list-style: disc; padding-inline-start: 1.25em; }
+  .prose li + li { margin-block-start: .4em; }
+
+  .newsletter { background: var(--ink); color: var(--bg); border-radius: 20px; padding: clamp(28px, 5vw, 56px); }
+  .newsletter h2 { color: var(--bg); }
+  .newsletter p { color: color-mix(in srgb, var(--bg) 70%, transparent); }
+  .form { display: flex; flex-wrap: wrap; gap: 10px; margin-block-start: 24px; }
+  .form input {
+    flex: 1 1 220px; min-block-size: 44px; padding: 0 16px; border-radius: 10px; font: inherit;
+    border: 1px solid color-mix(in srgb, var(--bg) 25%, transparent); background: transparent; color: var(--bg);
+  }
+  .form input::placeholder { color: color-mix(in srgb, var(--bg) 55%, transparent); }
+  .newsletter .btn { background: var(--bg); color: var(--ink); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<a class="skip" href="#content">Skip to content</a>
+
+<div class="topbar">
+  <div class="mogp-container mogp-pi-auto">
+    <span>MOGP example · Blog</span>
+    <a href="../index.html#examples">← All examples</a>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="mogp-container mogp-pi-auto bar">
+    <a class="brand" href="#">Blog Name</a>
+    <nav class="nav grow" aria-label="Main">
+      <a href="#" aria-current="page">Essays</a><a href="#">Notes</a><a href="#">Archive</a><a href="#">About</a>
+    </nav>
+    <a class="btn ghost sm" href="#newsletter">Subscribe</a>
+  </div>
+</header>
+
+<main id="content">
+
+  <!-- Featured story: 7 + 5 columns from lg, stacked below -->
+  <section class="section tight">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="mogp-grid mogp-gap-auto mogp-gap-lg-48 featured" style="align-items:center" data-mogp-grid="grid gap-auto gap-lg-48">
+        <a class="mogp-span-12 mogp-span-lg-7" href="#reading" aria-label="Read the featured essay" data-mogp="span-12 span-lg-7">
+          <div class="art" style="--h:210; --ratio:4/3"></div>
+        </a>
+        <div class="mogp-span-12 mogp-span-lg-5" data-mogp="span-12 span-lg-5">
+          <span class="badge accent">Featured essay</span>
+          <h1>The quiet power of a small grid</h1>
+          <p class="lead">Why twelve columns, four breakpoints and a handful of predictable classes beat a pile of one-off overrides when you build for reading.</p>
+          <div class="author" style="margin-block:28px">
+            <span class="avatar lg" style="--h:210"></span>
+            <div><b>Author Name</b><span class="meta"><span>Mar 14, 2026</span><span class="sep"></span><span>9 min read</span></span></div>
+          </div>
+          <a class="btn" href="#reading">Read the essay <svg><use href="#i-arrow"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Topic filter -->
+  <section class="tight" style="padding-block:8px 0">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="chips" role="list" aria-label="Topics">
+        <a class="chip" role="listitem" href="#" aria-current="true">All</a>
+        <a class="chip" role="listitem" href="#">Design</a>
+        <a class="chip" role="listitem" href="#">Engineering</a>
+        <a class="chip" role="listitem" href="#">Typography</a>
+        <a class="chip" role="listitem" href="#">Accessibility</a>
+        <a class="chip" role="listitem" href="#">Process</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Post grid: 1 → 2 → 3 columns -->
+  <section class="section" id="latest">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="row" style="justify-content:space-between; margin-block-end:32px">
+        <h2>Latest writing</h2>
+        <a class="small" href="#">View archive →</a>
+      </div>
+      <div class="mogp-grid mogp-gap-24 mogp-gap-lg-32" style="row-gap:48px" data-mogp-grid="grid gap-24 gap-lg-32">
+        <article class="mogp-span-12 mogp-span-md-6 mogp-span-lg-4" data-mogp="span-12 span-md-6 span-lg-4">
+          <a class="post-card" href="#"><div class="art" style="--h:200"></div>
+            <div class="stack" style="--stack:10px"><span class="badge">Typography</span><h3>Measure, leading and the 65-character line</h3><p class="muted">A practical guide to making long-form text comfortable on every screen size.</p><div class="meta"><span>Mar 6</span><span class="sep"></span><span>6 min</span></div></div></a>
+        </article>
+        <article class="mogp-span-12 mogp-span-md-6 mogp-span-lg-4" data-mogp="span-12 span-md-6 span-lg-4">
+          <a class="post-card" href="#"><div class="art" style="--h:222"></div>
+            <div class="stack" style="--stack:10px"><span class="badge">Engineering</span><h3>Logical properties are not just for RTL</h3><p class="muted">How inline-size and margin-inline simplified our component library.</p><div class="meta"><span>Feb 27</span><span class="sep"></span><span>7 min</span></div></div></a>
+        </article>
+        <article class="mogp-span-12 mogp-span-md-6 mogp-span-lg-4" data-mogp="span-12 span-md-6 span-lg-4">
+          <a class="post-card" href="#"><div class="art" style="--h:232"></div>
+            <div class="stack" style="--stack:10px"><span class="badge">Design</span><h3>Whitespace is a feature, not leftovers</h3><p class="muted">Gaps that scale with the viewport and why 24 pixels is a good default.</p><div class="meta"><span>Feb 19</span><span class="sep"></span><span>5 min</span></div></div></a>
+        </article>
+        <article class="mogp-span-12 mogp-span-md-6 mogp-span-lg-4" data-mogp="span-12 span-md-6 span-lg-4">
+          <a class="post-card" href="#"><div class="art" style="--h:205"></div>
+            <div class="stack" style="--stack:10px"><span class="badge">Accessibility</span><h3>Focus states people actually see</h3><p class="muted">Five patterns for keyboard navigation that survive a design review.</p><div class="meta"><span>Feb 8</span><span class="sep"></span><span>8 min</span></div></div></a>
+        </article>
+        <article class="mogp-span-12 mogp-span-md-6 mogp-span-lg-4" data-mogp="span-12 span-md-6 span-lg-4">
+          <a class="post-card" href="#"><div class="art" style="--h:215"></div>
+            <div class="stack" style="--stack:10px"><span class="badge">Process</span><h3>Design reviews without the theatre</h3><p class="muted">A lightweight template for feedback that leads to decisions.</p><div class="meta"><span>Jan 30</span><span class="sep"></span><span>4 min</span></div></div></a>
+        </article>
+        <article class="mogp-span-12 mogp-span-md-6 mogp-span-lg-4" data-mogp="span-12 span-md-6 span-lg-4">
+          <a class="post-card" href="#"><div class="art" style="--h:226"></div>
+            <div class="stack" style="--stack:10px"><span class="badge">Engineering</span><h3>Shipping CSS without a build step</h3><p class="muted">When a precompiled stylesheet is the right amount of tooling.</p><div class="meta"><span>Jan 17</span><span class="sep"></span><span>6 min</span></div></div></a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reading view: TOC 3 · article 6 · author 3 (stacked on small screens) -->
+  <section class="section alt" id="reading">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="mogp-grid mogp-gap-24 mogp-gap-lg-48" data-mogp-grid="grid gap-24 gap-lg-48">
+
+        <nav class="mogp-span-12 mogp-span-lg-3 is-sticky" aria-label="On this page" data-mogp="span-12 span-lg-3 · sticky">
+          <details class="toc" open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#s-grid" aria-current="true">Start with the grid</a></li>
+              <li><a href="#s-rhythm">Vertical rhythm</a></li>
+              <li><a href="#s-code">In practice</a></li>
+              <li><a href="#s-end">Closing thoughts</a></li>
+            </ol>
+          </details>
+        </nav>
+
+        <article class="mogp-span-12 mogp-span-lg-6" data-mogp="span-12 span-lg-6">
+          <p class="eyebrow">Essay · Layout</p>
+          <h2 style="font-size:clamp(2rem,1.4rem + 2.4vw,3rem); margin-block-end:24px">The quiet power of a small grid</h2>
+          <div class="prose">
+            <p>Most layouts fail in the gaps, not the boxes. A grid is the agreement about where those gaps live, and the smaller that agreement is, the longer it survives.</p>
+            <h2 id="s-grid">Start with the grid</h2>
+            <p>Twelve columns divide evenly by two, three, four and six. That single fact explains most of its popularity. Everything else is a question of which classes you allow yourself to write.</p>
+            <blockquote>Every class should say what it does, where it goes, and when it applies.</blockquote>
+            <h2 id="s-rhythm">Vertical rhythm</h2>
+            <p>Horizontal structure is only half the story. Pick a base unit, usually eight pixels, and derive every gap and padding from it. Consistency reads as quality long before anyone can say why.</p>
+            <figure>
+              <div class="art" style="--h:212; --ratio:21/9"></div>
+              <figcaption>Fig. 1 — A page built from three gap values and a single container.</figcaption>
+            </figure>
+            <h2 id="s-code">In practice</h2>
+            <p>A card row that is one column on phones, two on tablets and three on desktops needs three classes:</p>
+            <pre><code>&lt;div class="mogp-grid mogp-gap-auto"&gt;
+  &lt;article class="mogp-span-12 mogp-span-md-6 mogp-span-lg-4"&gt;…&lt;/article&gt;
+&lt;/div&gt;</code></pre>
+            <ul>
+              <li>Mobile first: no breakpoint means “always”.</li>
+              <li>Larger breakpoints only override what changes.</li>
+              <li>Long words never break the grid, because children can shrink.</li>
+            </ul>
+            <h2 id="s-end">Closing thoughts</h2>
+            <p>A small vocabulary is easier to teach, easier to review and easier to delete. That is the whole argument.</p>
+          </div>
+        </article>
+
+        <aside class="mogp-span-12 mogp-span-lg-3 is-sticky" data-mogp="span-12 span-lg-3 · sticky">
+          <div class="card flat stack" style="--stack:14px">
+            <div class="author"><span class="avatar lg" style="--h:210"></span><div><b>Author Name</b><span class="small muted">Design engineer</span></div></div>
+            <p class="small muted">Writes about layout, type and the boring parts of interfaces that make them feel calm.</p>
+            <a class="btn ghost sm" href="#">Follow</a>
+          </div>
+          <div class="card flat stack" style="--stack:10px; margin-block-start:16px">
+            <h4>Related</h4>
+            <ul class="link-list"><li><a href="#">Measure, leading and the 65-character line</a></li><li><a href="#">Whitespace is a feature</a></li><li><a href="#">Shipping CSS without a build step</a></li></ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter: centered with offsets -->
+  <section class="section" id="newsletter">
+    <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+      <div class="mogp-grid mogp-gap-auto" data-mogp-grid="grid gap-auto">
+        <div class="newsletter mogp-span-12 mogp-span-md-10 mogp-offset-md-1 mogp-span-lg-8 mogp-offset-lg-2" data-mogp="span-md-10 offset-md-1 · span-lg-8 offset-lg-2">
+          <h2>One thoughtful email a month</h2>
+          <p style="margin-block-start:12px">Essays on layout and interface craft. No tracking pixels, no filler, unsubscribe any time.</p>
+          <form class="form" onsubmit="return false">
+            <label class="sr-only" for="email">Email address</label>
+            <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
+            <button class="btn" type="submit">Subscribe</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="mogp-container mogp-pi-auto" data-mogp-container="container pi-auto">
+    <div class="mogp-grid mogp-gap-32" data-mogp-grid="grid gap-32">
+      <div class="mogp-span-12 mogp-span-lg-6" data-mogp="span-12 span-lg-6">
+        <a class="brand" href="#">Blog Name</a>
+        <p class="muted" style="max-inline-size:34ch; margin-block-start:14px">A small publication about the craft of building interfaces.</p>
+      </div>
+      <div class="mogp-span-6 mogp-span-md-4 mogp-span-lg-2" data-mogp="span-6 span-md-4 span-lg-2"><h4>Read</h4><ul class="link-list"><li><a href="#">Essays</a></li><li><a href="#">Notes</a></li><li><a href="#">Archive</a></li></ul></div>
+      <div class="mogp-span-6 mogp-span-md-4 mogp-span-lg-2" data-mogp="span-6 span-md-4 span-lg-2"><h4>Follow</h4><ul class="link-list"><li><a href="#">RSS</a></li><li><a href="#">Social</a></li><li><a href="#">Newsletter</a></li></ul></div>
+      <div class="mogp-span-12 mogp-span-md-4 mogp-span-lg-2" data-mogp="span-12 span-md-4 span-lg-2"><h4>About</h4><ul class="link-list"><li><a href="#">Author</a></li><li><a href="#">Colophon</a></li><li><a href="#">Contact</a></li></ul></div>
+    </div>
+    <div class="legal"><span>© 2026 Blog Name. Sample content.</span><span>Built with MOGP Layout System</span></div>
+  </div>
+</footer>
+
+<script src="examples.js" defer></script>
+</body>
+</html>

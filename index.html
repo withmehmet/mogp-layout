@@ -26,8 +26,10 @@
     --muted:     #8C8B85;
     --text:      #45443F;
     --ink:       #141413;
-    --accent:    #E8512A;
-    --accent-2:  #FBE3DA;
+    --accent:    #2A5FD0;   /* text, outlines, small marks */
+    --accent-2:  #E6EFFF;   /* soft tint */
+    --accent-fill: #BBD5FF; /* pastel fill; always paired with --accent-ink */
+    --accent-ink:  #0B1B33;
     --code-bg:   #161615;
     --code-text: #D9D8D2;
     --code-dim:  #6F6E69;
@@ -45,8 +47,10 @@
       --muted:     #85847E;
       --text:      #C4C3BD;
       --ink:       #F4F3EE;
-      --accent:    #FF6A42;
-      --accent-2:  #3A1F16;
+      --accent:    #8DB8FF;
+      --accent-2:  #14233D;
+      --accent-fill: #8DB8FF;
+      --accent-ink:  #0B1B33;
       --code-bg:   #0B0B0A;
       --code-text: #D9D8D2;
       --code-dim:  #5E5D58;
@@ -100,6 +104,14 @@
   .section .lead { margin-top: 14px; font-size: 1.08rem; max-inline-size: 58ch; }
   .section-body { margin-top: 44px; }
 
+  .example-card {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 20px; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--surface); color: var(--text); text-decoration: none;
+  }
+  .example-card b { color: var(--ink); font-size: 1.05rem; }
+  .example-card:hover, .example-card:focus-visible { border-color: var(--accent); }
+
   /* ---------- hero ---------- */
   .hero { padding-block: 88px 96px; }
   .badge {
@@ -139,7 +151,7 @@
 
   .cell {
     min-block-size: 96px; border-radius: 6px; padding: 12px 14px;
-    background: var(--accent); color: #fff;
+    background: var(--accent-fill); color: var(--accent-ink);
     display: flex; align-items: flex-end;
     font-family: var(--font-mono); font-size: 0.78rem;
     overflow-wrap: anywhere;
@@ -154,7 +166,7 @@
     padding: 20px 22px; overflow-x: auto; white-space: pre; min-inline-size: 0;
   }
   .code .t { color: var(--code-dim); }
-  .code .c { color: #FFB199; }
+  .code .c { color: #C9B8FF; }
   .code .k { color: #9CC7FF; }
   .copy {
     position: absolute; top: 10px; right: 10px;
@@ -183,9 +195,9 @@
   .layer-hint { color: var(--muted); display: block; margin-bottom: 14px; }
   .layer-container { border: 1.5px dashed var(--muted); }
   .layer-grid { border: 1.5px solid var(--ink); background: var(--surface); }
-  .layer-child { border-radius: 6px; background: var(--accent); color: #fff; padding: 12px; min-block-size: 70px; }
-  .layer-child .layer-tag { color: #fff; }
-  .layer-child .layer-hint { color: rgba(255,255,255,.8); margin: 0; }
+  .layer-child { border-radius: 6px; background: var(--accent-fill); color: var(--accent-ink); padding: 12px; min-block-size: 70px; }
+  .layer-child .layer-tag { color: var(--accent-ink); }
+  .layer-child .layer-hint { color: var(--accent-ink); opacity: .75; margin: 0; }
 
   .rules { display: grid; gap: 14px; }
   .rule { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
@@ -194,7 +206,7 @@
   .rule .ok, .rule .no { display: block; margin-top: 10px; font-family: var(--font-mono); font-size: 0.78rem; overflow-wrap: anywhere; }
   .rule .ok::before { content: "✓  "; color: #2E9E5B; }
   .rule .no { color: var(--muted); }
-  .rule .no::before { content: "✕  "; color: var(--accent); }
+  .rule .no::before { content: "✕  "; color: #D9484E; }
 
   /* ---------- playground ---------- */
   .pg-presets { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -208,7 +220,7 @@
   .pg-controls { margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px 12px; }
   .pg-readout { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); }
   .pg-readout b { color: var(--ink); font-weight: 500; font-size: 1.05rem; }
-  .pg-readout .bp-pill { color: #fff; background: var(--accent); border-radius: 999px; padding: 2px 10px; margin-left: 8px; font-size: 0.78rem; }
+  .pg-readout .bp-pill { color: var(--accent-ink); background: var(--accent-fill); border-radius: 999px; padding: 2px 10px; margin-left: 8px; font-size: 0.78rem; }
   .bp-jumps { display: flex; gap: 6px; flex-wrap: wrap; }
   .bp-jumps button {
     font: 500 0.75rem/1 var(--font-mono); color: var(--text); cursor: pointer;
@@ -232,7 +244,7 @@
 
   .pg-code { min-inline-size: 0; }
   .tok { border-radius: 4px; padding: 1px 3px; margin: 0 -3px; transition: background .15s, color .15s, opacity .15s; }
-  .tok.is-on { background: color-mix(in srgb, #FF6A42 26%, transparent); color: #FFD2C4; }
+  .tok.is-on { background: color-mix(in srgb, #8DB8FF 26%, transparent); color: #CFE1FF; }
   .tok.is-off { opacity: .38; text-decoration: line-through; text-decoration-color: rgba(255,255,255,.35); }
   .tok.is-wait { opacity: .38; }
   .legend { margin-top: 14px; display: flex; gap: 18px; flex-wrap: wrap; font: 0.75rem/1.4 var(--font-mono); color: var(--muted); }
@@ -295,6 +307,7 @@
     <nav class="nav" aria-label="Sections">
       <a class="nav-hide-sm" href="#start">Start</a>
       <a class="nav-hide-sm" href="#playground">Playground</a>
+      <a class="nav-hide-sm" href="#examples">Examples</a>
       <a class="nav-hide-sm" href="#reference">Reference</a>
       <a class="nav-gh" href="https://github.com/withmehmet/mogp-layout" target="_blank" rel="noopener">GitHub ↗</a>
     </nav>
@@ -465,6 +478,30 @@
   </div>
 </section>
 
+<!-- ============ EXAMPLES ============ -->
+<section class="section" id="examples">
+  <div class="mogp-container mogp-pi-auto">
+    <p class="eyebrow">Examples</p>
+    <h2>Real pages, built with the same classes.</h2>
+    <p class="lead">Three full-page templates. Open them, resize the window, and press the Layout button to see which classes build each region.</p>
+
+    <div class="mogp-grid mogp-gap-auto section-body">
+      <a class="example-card mogp-span-12 mogp-span-md-4" href="examples/blog.html">
+        <b>Blog</b>
+        <span>Featured story, post grid, reading view with sticky contents, newsletter and footer.</span>
+      </a>
+      <a class="example-card mogp-span-12 mogp-span-md-4" href="examples/landing.html">
+        <b>Landing page</b>
+<span>Hero, logos, features, alternating sections, stats, testimonials, pricing and FAQ.</span>
+      </a>
+      <a class="example-card mogp-span-12 mogp-span-md-4" href="examples/dashboard.html">
+        <b>Dashboard</b>
+        <span>App shell with sidebar, KPI cards, charts, orders table, activity and goals.</span>
+      </a>
+    </div>
+  </div>
+</section>
+
 <!-- ============ ANATOMY + REFERENCE ============ -->
 <section class="section" id="reference">
   <div class="mogp-container mogp-pi-auto">
@@ -479,7 +516,7 @@
         <span class="sep">-</span>
         <span class="part" style="--c:var(--accent)"><span class="part-text">md</span><span class="part-label"><b>breakpoint</b>optional</span></span>
         <span class="sep">-</span>
-        <span class="part" style="--c:#3B82F6"><span class="part-text">6</span><span class="part-label"><b>value</b>step or count</span></span>
+        <span class="part" style="--c:#2E9E5B"><span class="part-text">6</span><span class="part-label"><b>value</b>step or count</span></span>
       </div>
       <p class="anatomy-note">No breakpoint means “always”. With a breakpoint it means “from this width up”. Mobile first, every time.</p>
     </div>
@@ -714,12 +751,12 @@
     return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="mogp-layout-full.css">
 <style>
-  :root{--bg:#FAFAF7;--accent:#E8512A;--ink:#141413;--line:#E6E5DF}
-  @media (prefers-color-scheme:dark){:root{--bg:#111110;--accent:#FF6A42;--ink:#F4F3EE;--line:#2A2A28}}
+  :root{--bg:#FAFAF7;--accent:#BBD5FF;--on-accent:#0B1B33;--ink:#141413;--line:#E6E5DF}
+  @media (prefers-color-scheme:dark){:root{--bg:#111110;--accent:#8DB8FF;--on-accent:#0B1B33;--ink:#F4F3EE;--line:#2A2A28}}
   html,body{margin:0;background:var(--bg)}
   body{padding-block:24px;font-family:"Geist Mono",ui-monospace,monospace}
   .wrap{outline:1px dashed var(--line);outline-offset:-1px}
-  .item{min-block-size:84px;border-radius:6px;background:var(--accent);color:#fff;padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;font-size:12px}
+  .item{min-block-size:84px;border-radius:6px;background:var(--accent);color:var(--on-accent);padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;font-size:12px}
   .item.alt{background:var(--ink);color:var(--bg)}
   .item.tall{min-block-size:180px}
   .item strong{font-weight:600;font-family:system-ui,sans-serif;font-size:13px}
